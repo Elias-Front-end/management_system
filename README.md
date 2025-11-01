@@ -13,7 +13,6 @@ Sistema web completo para gestão de treinamentos e turmas, permitindo que admin
 - [Atualizações Recentes](#-atualizações-recentes)
 - [Visão Geral](#-visão-geral)
 - [Tecnologias](#-tecnologias)
-- [🚀 Início Rápido (Desenvolvimento Local)](#-início-rápido-desenvolvimento-local)
 - [Requisitos do Sistema](#-requisitos-do-sistema)
 - [Configuração do Ambiente](#-configuração-do-ambiente)
 - [Estrutura do Projeto](#-estrutura-do-projeto)
@@ -25,6 +24,27 @@ Sistema web completo para gestão de treinamentos e turmas, permitindo que admin
 - [Funcionalidades](#-funcionalidades)
 - [Troubleshooting](#-troubleshooting)
 - [IDEs Recomendadas](#-ides-recomendadas)
+
+## 🔄 Atualizações Recentes
+
+### ✅ v1.1.0 - Correção Crítica de CSRF (Janeiro 2025)
+
+**Problema Resolvido**: Sistema apresentava erro "CSRF Failed: CSRF token missing" impedindo login e operações POST/PUT/PATCH/DELETE.
+
+**Correções Implementadas**:
+- ✅ **Backend**: Configurado `CSRF_COOKIE_HTTPONLY = False` para permitir acesso JavaScript
+- ✅ **Frontend**: Implementado interceptor automático Axios para incluir CSRF token
+- ✅ **Segurança**: Mantidas todas as proteções CSRF com acesso controlado
+- ✅ **Documentação**: Atualizado guia de deploy e troubleshooting
+
+**Impacto**: Sistema agora funciona completamente com autenticação e operações CRUD.
+
+**Arquivos Modificados**:
+- `backend/backend/settings.py` - Configurações CSRF
+- `frontend/src/services/api.ts` - Interceptor automático
+- `frontend/src/App.tsx` - Inicialização CSRF
+- `DEPLOY_GUIDE.md` - Documentação atualizada
+- `README.md` - Troubleshooting atualizado
 
 ## 🎯 Visão Geral
 
@@ -54,63 +74,6 @@ O StrataSec é uma plataforma educacional que oferece:
 - **Zustand 5.0.8** - Gerenciamento de estado
 - **Axios 1.12.2** - Cliente HTTP
 - **Lucide React** - Ícones
-
-## 🚀 Início Rápido (Desenvolvimento Local)
-
-**Para desenvolvedores que querem testar rapidamente o sistema:**
-
-### Pré-requisitos
-- Python 3.10+ instalado
-- Node.js 18+ instalado
-
-### 1. Backend (Django + SQLite)
-```bash
-# Clonar e navegar
-git clone <repository-url>
-cd management_system/backend
-
-# Criar ambiente virtual
-python -m venv .venv
-
-# Ativar ambiente virtual (Windows PowerShell)
-.venv\Scripts\Activate.ps1
-# ou Windows CMD: .venv\Scripts\activate.bat
-# ou Linux/Mac: source .venv/bin/activate
-
-# Instalar dependências essenciais
-pip install Django djangorestframework djangorestframework-simplejwt django-cors-headers Pillow python-decouple
-
-# Configurar banco de dados
-python manage.py makemigrations
-python manage.py migrate
-
-# Criar admin automaticamente
-python set_admin_password.py
-
-# Iniciar servidor
-python manage.py runserver 8000
-```
-
-### 2. Frontend (React)
-```bash
-# Em outro terminal
-cd frontend
-
-# Instalar dependências
-npm install
-
-# Iniciar servidor
-npm run dev
-```
-
-### 3. Acessar Sistema
-- **Frontend**: http://localhost:5174
-- **Login**: `admin` / `admin123` (selecionar "Administrador")
-- **Django Admin**: http://localhost:8000/admin/
-
-**⚠️ Importante**: Sempre selecione o tipo de perfil (Administrador/Aluno) antes de fazer login!
-
----
 
 ## 💻 Requisitos do Sistema
 
@@ -1164,22 +1127,6 @@ python manage.py createsuperuser
 ```
 
 ## 🚀 Deploy em Produção
-
-O sistema oferece **três opções de deploy**:
-
-1. **🌐 PaaS (Render/Railway)** - Mais fácil, ideal para iniciantes
-2. **🐳 Docker** - Containerizado, ideal para desenvolvimento e produção
-3. **☁️ Servidor Tradicional** - VPS/Cloud, máximo controle
-
-> 📖 **Documentação completa:** Consulte o arquivo `DEPLOY_GUIDE.md` para instruções detalhadas de cada método.
-
-### Resumo das Opções
-
-| Método | Dificuldade | Custo | Escalabilidade | Controle |
-|--------|-------------|-------|----------------|----------|
-| **PaaS** | ⭐ Fácil | 💰 Baixo | ⭐⭐⭐ Alta | ⭐⭐ Médio |
-| **Docker** | ⭐⭐ Médio | 💰💰 Médio | ⭐⭐⭐ Alta | ⭐⭐⭐ Alto |
-| **VPS** | ⭐⭐⭐ Difícil | 💰💰💰 Alto | ⭐⭐ Média | ⭐⭐⭐⭐ Máximo |
 
 ### Pré-requisitos para Deploy
 

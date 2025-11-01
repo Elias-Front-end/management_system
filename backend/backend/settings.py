@@ -80,53 +80,41 @@ WSGI_APPLICATION = "backend.wsgi.application"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 # Configuração de banco de dados flexível
-# Suporte para DATABASE_URL (usado por PaaS como Render, Railway, Heroku)
-import dj_database_url
+DATABASE_ENGINE = config('DATABASE_ENGINE', default='sqlite3')
 
-DATABASE_URL = config('DATABASE_URL', default=None)
-
-if DATABASE_URL:
-    # Usar DATABASE_URL se fornecida (PaaS)
+if DATABASE_ENGINE == 'postgresql':
     DATABASES = {
-        'default': dj_database_url.parse(DATABASE_URL)
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DATABASE_NAME', default='management_system'),
+            'USER': config('DATABASE_USER', default='postgres'),
+            'PASSWORD': config('DATABASE_PASSWORD', default=''),
+            'HOST': config('DATABASE_HOST', default='localhost'),
+            'PORT': config('DATABASE_PORT', default='5432'),
+            'OPTIONS': {},
+        }
     }
-else:
-    # Configuração manual por variáveis individuais
-    DATABASE_ENGINE = config('DATABASE_ENGINE', default='sqlite3')
-    
-    if DATABASE_ENGINE == 'postgresql':
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.postgresql',
-                'NAME': config('DATABASE_NAME', default='management_system'),
-                'USER': config('DATABASE_USER', default='postgres'),
-                'PASSWORD': config('DATABASE_PASSWORD', default=''),
-                'HOST': config('DATABASE_HOST', default='localhost'),
-                'PORT': config('DATABASE_PORT', default='5432'),
-                'OPTIONS': {},
-            }
+elif DATABASE_ENGINE == 'mysql':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': config('DATABASE_NAME', default='management_system'),
+            'USER': config('DATABASE_USER', default='root'),
+            'PASSWORD': config('DATABASE_PASSWORD', default=''),
+            'HOST': config('DATABASE_HOST', default='localhost'),
+            'PORT': config('DATABASE_PORT', default='3306'),
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+            },
         }
-    elif DATABASE_ENGINE == 'mysql':
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.mysql',
-                'NAME': config('DATABASE_NAME', default='management_system'),
-                'USER': config('DATABASE_USER', default='root'),
-                'PASSWORD': config('DATABASE_PASSWORD', default=''),
-                'HOST': config('DATABASE_HOST', default='localhost'),
-                'PORT': config('DATABASE_PORT', default='3306'),
-                'OPTIONS': {
-                    'charset': 'utf8mb4',
-                },
-            }
+    }
+else:  # SQLite (padrão para desenvolvimento)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
         }
-    else:  # SQLite (padrão para desenvolvimento)
-        DATABASES = {
-            "default": {
-                "ENGINE": "django.db.backends.sqlite3",
-                "NAME": BASE_DIR / "db.sqlite3",
-            }
-        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

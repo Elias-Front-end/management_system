@@ -24,6 +24,10 @@ RUN apt-get update \
 COPY backend/requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copiar script de espera do banco
+COPY wait-for-db.sh /app/
+RUN chmod +x /app/wait-for-db.sh
+
 # Copiar código do backend
 COPY backend/ /app/
 
