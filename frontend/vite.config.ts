@@ -12,7 +12,7 @@ export default defineConfig({
     proxy: {
       // Proxy API requests to Django backend to avoid CORS/CSRF issues in dev
       '/api': {
-        target: 'http://backend:8000',
+        target: 'http://localhost:8000',  // Alterado para desenvolvimento local
         changeOrigin: true,
         // Ensure cookies and headers are forwarded correctly
         secure: false,
