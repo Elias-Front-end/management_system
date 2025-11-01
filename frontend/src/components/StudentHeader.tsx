@@ -1,7 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, LogOut } from 'lucide-react';
+import { Home, LogOut, Moon, Sun } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { useTheme } from '../hooks/useTheme';
 
 interface StudentHeaderProps {
   title?: string;
@@ -11,6 +12,7 @@ interface StudentHeaderProps {
 export const StudentHeader: React.FC<StudentHeaderProps> = () => {
   const navigate = useNavigate();
   const { logout } = useAuthStore();
+  const { theme, toggleTheme } = useTheme();
 
   const handleLogout = async () => {
     await logout();
@@ -40,13 +42,20 @@ export const StudentHeader: React.FC<StudentHeaderProps> = () => {
           {/* Botões de Navegação */}
           <div className="flex items-center space-x-3">
             <button
+              onClick={() => toggleTheme()}
+              className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 text-white hover:opacity-90 shadow-md transition-colors"
+              aria-label={theme === 'light' ? 'Mudar para tema escuro' : 'Mudar para tema claro'}
+            >
+              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
+            <button
               onClick={handleHome}
               className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 shadow-sm"
             >
               <Home size={18} />
               <span className="hidden sm:inline">Home</span>
             </button>
-            
+
             <button
               onClick={handleLogout}
               className="flex items-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200 shadow-sm"
@@ -57,7 +66,6 @@ export const StudentHeader: React.FC<StudentHeaderProps> = () => {
           </div>
         </div>
       </div>
-
 
     </div>
   );

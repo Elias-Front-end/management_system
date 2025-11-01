@@ -101,14 +101,14 @@ export const ResourceModal: React.FC<ResourceModalProps> = ({ isOpen, onClose, r
   if (!isOpen || !resource) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
       aria-describedby="modal-description"
     >
-      <div 
+      <div
         ref={modalRef}
         className={`relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-hidden focus-ring ${
           isFullscreen ? 'max-w-none max-h-none w-screen h-screen rounded-none' : ''
@@ -118,21 +118,22 @@ export const ResourceModal: React.FC<ResourceModalProps> = ({ isOpen, onClose, r
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex-1">
-            <h2 
+            <h2
               id="modal-title"
               className="text-xl font-semibold text-gray-900 dark:text-gray-100 truncate"
             >
               {resource.nome_recurso}
             </h2>
-            <p 
+            <p
               id="modal-description"
               className="text-sm text-gray-600 dark:text-gray-400"
             >
               {resource.treinamento_nome && `${resource.treinamento_nome} • `}{resource.turma_nome}
             </p>
           </div>
-          
+
           <div className="flex items-center space-x-2">
+            {/* Botão de Download - sempre visível */}
             <button
               onClick={handleDownload}
               className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors focus-ring"
@@ -141,16 +142,19 @@ export const ResourceModal: React.FC<ResourceModalProps> = ({ isOpen, onClose, r
             >
               <Download size={20} />
             </button>
-            
-            <button
-              onClick={toggleFullscreen}
-              className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors focus-ring"
-              title="Alternar tela cheia"
-              aria-label="Alternar modo tela cheia"
-            >
-              <Maximize size={20} />
-            </button>
-            
+
+            {/* Botão de Tela Cheia - apenas para vídeos e PDFs */}
+            {(resource.tipo_recurso === 'video' || resource.tipo_recurso === 'arquivo_pdf') && (
+              <button
+                onClick={toggleFullscreen}
+                className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors focus-ring"
+                title="Alternar tela cheia"
+                aria-label="Alternar modo tela cheia"
+              >
+                <Maximize size={20} />
+              </button>
+            )}
+
             <button
               onClick={onClose}
               className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors focus-ring"
@@ -186,7 +190,7 @@ export const ResourceModal: React.FC<ResourceModalProps> = ({ isOpen, onClose, r
                   <track kind="captions" />
                   Seu navegador não suporta o elemento de vídeo.
                 </video>
-                
+
                 {/* Custom Controls Overlay */}
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
                   <div className="flex items-center space-x-4">
@@ -197,7 +201,7 @@ export const ResourceModal: React.FC<ResourceModalProps> = ({ isOpen, onClose, r
                     >
                       {isPlaying ? <Pause size={24} /> : <Play size={24} />}
                     </button>
-                    
+
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={toggleMute}
@@ -220,13 +224,34 @@ export const ResourceModal: React.FC<ResourceModalProps> = ({ isOpen, onClose, r
                   </div>
                 </div>
               </div>
-              
+
               {resource.descricao_recurso && (
                 <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
                   <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Descrição</h3>
                   <p className="text-gray-700 dark:text-gray-300">{resource.descricao_recurso}</p>
                 </div>
               )}
+
+              {/* Ações do Vídeo */}
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Ações</h3>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={() => window.open(resource.arquivo_url, '_blank')}
+                    className="btn-secondary inline-flex items-center justify-center space-x-2 flex-1"
+                  >
+                    <Maximize size={16} />
+                    <span>Abrir em Nova Aba</span>
+                  </button>
+                  <button
+                    onClick={handleDownload}
+                    className="btn-primary inline-flex items-center justify-center space-x-2 flex-1"
+                  >
+                    <Download size={16} />
+                    <span>Download</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -243,7 +268,7 @@ export const ResourceModal: React.FC<ResourceModalProps> = ({ isOpen, onClose, r
                   >
                     <ZoomOut size={16} />
                   </button>
-                  <span 
+                  <span
                     className="text-sm text-gray-700 dark:text-gray-300 min-w-[60px] text-center"
                     aria-live="polite"
                     aria-label={`Zoom atual: ${Math.round(pdfZoom * 100)} por cento`}
@@ -259,7 +284,7 @@ export const ResourceModal: React.FC<ResourceModalProps> = ({ isOpen, onClose, r
                     <ZoomIn size={16} />
                   </button>
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => setPdfPage(prev => Math.max(prev - 1, 1))}
@@ -270,7 +295,7 @@ export const ResourceModal: React.FC<ResourceModalProps> = ({ isOpen, onClose, r
                   >
                     <ChevronLeft size={16} />
                   </button>
-                  <span 
+                  <span
                     className="text-sm text-gray-700 dark:text-gray-300 min-w-[80px] text-center"
                     aria-live="polite"
                     aria-label={`Página atual: ${pdfPage}`}
@@ -287,7 +312,7 @@ export const ResourceModal: React.FC<ResourceModalProps> = ({ isOpen, onClose, r
                   </button>
                 </div>
               </div>
-              
+
               {/* PDF Viewer */}
               <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 text-center">
                 <iframe
@@ -300,9 +325,9 @@ export const ResourceModal: React.FC<ResourceModalProps> = ({ isOpen, onClose, r
                   }}
                 />
                 <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  Se o PDF não carregar, <a 
-                    href={resource.arquivo_url} 
-                    target="_blank" 
+                  Se o PDF não carregar, <a
+                    href={resource.arquivo_url}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:text-blue-800 underline"
                   >
@@ -310,7 +335,7 @@ export const ResourceModal: React.FC<ResourceModalProps> = ({ isOpen, onClose, r
                   </a>
                 </div>
               </div>
-              
+
               {resource.descricao_recurso && (
                 <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
                   <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Descrição</h3>

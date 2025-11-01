@@ -17,43 +17,67 @@ Object.defineProperty(window, 'matchMedia', {
 })
 
 // Mock IntersectionObserver
-;(globalThis as any).IntersectionObserver = vi.fn().mockImplementation(() => ({
+interface MockIntersectionObserver {
+  observe: ReturnType<typeof vi.fn>;
+  unobserve: ReturnType<typeof vi.fn>;
+  disconnect: ReturnType<typeof vi.fn>;
+}
+
+(globalThis as unknown as { IntersectionObserver: unknown }).IntersectionObserver = vi.fn().mockImplementation((): MockIntersectionObserver => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
 }))
 
 // Mock ResizeObserver
-;(globalThis as any).ResizeObserver = vi.fn().mockImplementation(() => ({
+interface MockResizeObserver {
+  observe: ReturnType<typeof vi.fn>;
+  unobserve: ReturnType<typeof vi.fn>;
+  disconnect: ReturnType<typeof vi.fn>;
+}
+
+(globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = vi.fn().mockImplementation((): MockResizeObserver => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
 }))
 
 // Mock localStorage
-const localStorageMock = {
+interface MockStorage {
+  getItem: ReturnType<typeof vi.fn>;
+  setItem: ReturnType<typeof vi.fn>;
+  removeItem: ReturnType<typeof vi.fn>;
+  clear: ReturnType<typeof vi.fn>;
+}
+
+const localStorageMock: MockStorage = {
   getItem: vi.fn(),
   setItem: vi.fn(),
   removeItem: vi.fn(),
   clear: vi.fn(),
 }
-;(globalThis as any).localStorage = localStorageMock
+;(globalThis as unknown as { localStorage: MockStorage }).localStorage = localStorageMock
 
 // Mock sessionStorage
-const sessionStorageMock = {
+const sessionStorageMock: MockStorage = {
   getItem: vi.fn(),
   setItem: vi.fn(),
   removeItem: vi.fn(),
   clear: vi.fn(),
 }
-;(globalThis as any).sessionStorage = sessionStorageMock
+;(globalThis as unknown as { sessionStorage: MockStorage }).sessionStorage = sessionStorageMock
 
 // Mock URL.createObjectURL
-;(globalThis as any).URL.createObjectURL = vi.fn(() => 'mocked-url')
-;(globalThis as any).URL.revokeObjectURL = vi.fn()
+interface MockURL {
+  createObjectURL: ReturnType<typeof vi.fn>;
+  revokeObjectURL: ReturnType<typeof vi.fn>;
+}
+
+;(globalThis as unknown as { URL: MockURL }).URL.createObjectURL = vi.fn(() => 'mocked-url')
+;(globalThis as unknown as { URL: MockURL }).URL.revokeObjectURL = vi.fn()
 
 // Mock fetch
-;(globalThis as any).fetch = vi.fn()
+;(globalThis as unknown as { fetch: ReturnType<typeof vi.fn> }).fetch = vi.fn()
 
 // Setup cleanup after each test
 afterEach(() => {

@@ -2,7 +2,22 @@
  * Utilidades para extrair e traduzir mensagens de erro (DRF/Axios) para PT-BR.
  */
 
-type AnyError = any;
+// ✅ Tipo específico para erros em vez de 'any'
+interface ApiErrorResponse {
+  response?: {
+    data?: {
+      error?: string;
+      detail?: string;
+      details?: Record<string, string[]>;
+      [key: string]: unknown;
+    };
+    status?: number;
+  };
+  message?: string;
+  [key: string]: unknown;
+}
+
+type AnyError = ApiErrorResponse | Error | string | unknown;
 
 /**
  * Traduz mensagens comuns do Django/DRF para Português (Brasil).
@@ -56,7 +71,9 @@ export function translateToPTBR(message: string): string {
  * Extrai uma mensagem de erro de uma resposta Axios/DRF e aplica tradução para PT-BR.
  */
 export function extractAndTranslateError(error: AnyError, fallback: string = 'Ocorreu um erro ao processar a solicitação'): string {
-  const data = error?.response?.data;
+  // Verificação de tipo mais segura
+  const hasResponse = error && typeof error === 'object' && 'response' in error;
+  const data = hasResponse ? (error as ApiErrorResponse).response?.data : undefined;
   let msg: string | undefined = data?.error || data?.detail;
 
   const fieldKeys = [
@@ -71,8 +88,10 @@ export function extractAndTranslateError(error: AnyError, fallback: string = 'Oc
     }
   }
 
-  if (!msg && typeof error?.message === 'string' && error.message) {
-    msg = error.message;
+  // Verificação de tipo mais segura para message
+  const hasMessage = error && typeof error === 'object' && 'message' in error;
+  if (!msg && hasMessage && typeof (error as ApiErrorResponse).message === 'string' && (error as ApiErrorResponse).message) {
+    msg = (error as ApiErrorResponse).message;
   }
 
   return translateToPTBR(msg || fallback);

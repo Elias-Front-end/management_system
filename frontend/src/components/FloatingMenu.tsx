@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  Home, BookOpen, Users, GraduationCap, 
+import {
+  Home, BookOpen, Users, GraduationCap,
   FileText, Settings, LogOut, User
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
@@ -73,9 +73,10 @@ const menuItems: MenuItem[] = [
 
 interface FloatingMenuProps {
   onNavigate?: () => void;
+  isOpen: boolean; // Adicionado
 }
 
-export const FloatingMenu: React.FC<FloatingMenuProps> = ({ onNavigate }) => {
+export const FloatingMenu: React.FC<FloatingMenuProps> = ({ onNavigate, isOpen }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
@@ -110,7 +111,8 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ onNavigate }) => {
       {/* Floating Menu */}
       <div
         className={`
-          h-full w-full transition-all duration-500 ease-out
+          fixed inset-y-0 left-0 z-30 w-64 bg-gradient-to-br from-blue-600 to-purple-700 text-white shadow-xl transform transition-transform duration-300 ease-in-out
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         <div className="floating-menu overflow-hidden h-full flex flex-col">
@@ -190,7 +192,7 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ onNavigate }) => {
             className="w-full flex items-center justify-center p-2 rounded-xl text-red-600 hover:bg-red-500/10 hover:text-red-700 transition-all duration-300 group relative dark:text-red-300 dark:hover:bg-red-500/20 dark:hover:text-red-200"
           >
             <LogOut size={20} />
-            
+
             <div className="absolute left-full ml-2 px-2 py-1 bg-black/80 backdrop-blur-sm text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap z-10 shadow-lg">
               Sair
             </div>

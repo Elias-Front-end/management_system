@@ -1,12 +1,12 @@
 import axios from 'axios';
 import type { 
-  Treinamento, Turma, Recurso, Aluno, Matricula,
+  Treinamento, Turma, Recurso, Aluno, Matricula, User,
   LoginRequest, LoginResponse 
 } from '../types';
 
 // Prefer relative API URL during development so Vite proxy can handle requests
 // Allows switching to explicit URL via environment variable when needed
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL ?? '/api';
+const API_BASE_URL = (import.meta as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL ?? '/api';
 
 // Configure axios defaults
 axios.defaults.withCredentials = true;
@@ -19,9 +19,11 @@ const api = axios.create({
 });
 
 // Helper to normalize DRF paginated responses to arrays
-function unwrapArray<T>(data: any): T[] {
+function unwrapArray<T>(data: unknown): T[] {
   if (Array.isArray(data)) return data as T[];
-  if (data && Array.isArray(data.results)) return data.results as T[];
+  if (data && typeof data === 'object' && 'results' in data && Array.isArray((data as { results: unknown }).results)) {
+    return (data as { results: T[] }).results;
+  }
   return [] as T[];
 }
 
@@ -33,7 +35,7 @@ export const authAPI = {
   logout: (): Promise<{ message: string }> =>
     api.post('/auth/logout/').then(res => res.data),
   
-  me: (): Promise<any> =>
+  me: (): Promise<User> =>
     api.get('/auth/me/').then(res => res.data),
 };
 

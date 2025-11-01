@@ -19,7 +19,7 @@ export const TimeoutWarningModal: React.FC<TimeoutWarningModalProps> = ({
   useEffect(() => {
     if (isOpen && remainingTime > 0) {
       setTimeLeft(remainingTime);
-      
+
       const interval = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1000) {
@@ -58,14 +58,14 @@ export const TimeoutWarningModal: React.FC<TimeoutWarningModalProps> = ({
           <p className="text-gray-600 mb-4">
             Sua sessão será encerrada por inatividade em:
           </p>
-          
+
           <div className="flex items-center justify-center bg-gray-100 rounded-lg p-4">
             <Clock className="h-8 w-8 text-red-500 mr-3" />
             <span className="text-3xl font-bold text-red-500">
               {formatTime(timeLeft)}
             </span>
           </div>
-          
+
           <p className="text-sm text-gray-500 mt-3 text-center">
             Clique em "Continuar Sessão" para permanecer logado
           </p>

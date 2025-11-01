@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, Search, Edit, Trash2, FileText, AlertCircle, Eye, EyeOff, Upload } from 'lucide-react';
 import { recursosAPI, turmasAPI } from '../services/api';
@@ -42,11 +42,7 @@ export const Recursos: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [searchTerm]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
       const [recursosData, turmasData] = await Promise.all([
@@ -62,20 +58,24 @@ export const Recursos: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [searchTerm, notifyError]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleOpenModal = (recurso?: Recurso) => {
     if (recurso) {
       setEditingRecurso(recurso);
       setFormData({
-        nome: (recurso as any)?.nome_recurso ?? (recurso as any)?.nome ?? '',
-        descricao: (recurso as any)?.descricao ?? (recurso as any)?.descricao_recurso ?? '',
+        nome: recurso.nome_recurso ?? recurso.titulo ?? '',
+        descricao: recurso.descricao ?? recurso.descricao_recurso ?? '',
         // Mantém qualquer valor que vier do backend, suportando tipos antigos
-        tipo: (((recurso as any)?.tipo_recurso ?? 'video') as 'video' | 'arquivo_pdf' | 'arquivo_zip'),
+        tipo: (recurso.tipo_recurso ?? recurso.tipo ?? 'video') as 'video' | 'arquivo_pdf' | 'arquivo_zip',
         arquivo: null,
-        turma: (recurso as any)?.turma ?? '',
-        acesso_previo: (recurso as any)?.acesso_previo ?? false,
-        is_draft: (recurso as any)?.draft ?? (recurso as any)?.is_draft ?? false,
+        turma: recurso.turma ?? '',
+        acesso_previo: recurso.acesso_previo ?? false,
+        is_draft: recurso.draft ?? false,
       });
     } else {
       setEditingRecurso(null);
@@ -106,7 +106,7 @@ export const Recursos: React.FC = () => {
       is_draft: false,
     });
     setError(null);
-    
+
     // Se foi solicitado para navegar de volta ao dashboard OU se veio do dashboard
     const fromDashboard = searchParams.get('from') === 'dashboard';
     if (navigateToDashboard || fromDashboard) {
@@ -116,7 +116,7 @@ export const Recursos: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Nome e turma são obrigatórios sempre. Arquivo é obrigatório apenas na criação
     if (!formData.nome.trim() || !formData.turma || (!editingRecurso && !formData.arquivo)) {
       setError(editingRecurso ? 'Nome e Turma são obrigatórios' : 'Nome, Turma e Arquivo são obrigatórios');
@@ -138,7 +138,7 @@ export const Recursos: React.FC = () => {
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
       dataInicio.setHours(0, 0, 0, 0);
-      
+
       if (hoje >= dataInicio) {
         setError('Após o início da turma, recursos com "Acesso prévio" não podem ser rascunhos');
         notifyWarning('Após o início da turma, recursos com "Acesso prévio" não podem ser rascunhos', 'Regra de negócio');
@@ -167,11 +167,11 @@ export const Recursos: React.FC = () => {
       } else {
         await recursosAPI.create(submitData);
       }
-      
+
       notifySuccess(editingRecurso ? 'Recurso atualizado com sucesso' : 'Recurso criado com sucesso');
       handleCloseModal();
       loadData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       const errorMessage = extractAndTranslateError(error, 'Erro ao salvar recurso');
       setError(errorMessage);
       notifyError(errorMessage, 'Erro ao salvar recurso');
@@ -181,7 +181,7 @@ export const Recursos: React.FC = () => {
   };
 
   const handleDelete = async (recurso: Recurso) => {
-    const nomeDisplay = (recurso as any)?.nome_recurso ?? (recurso as any)?.nome ?? 'recurso';
+    const nomeDisplay = recurso.nome_recurso ?? recurso.titulo ?? 'recurso';
     const confirmed = await confirm({
       title: 'Confirmar Exclusão',
       message: `Tem certeza que deseja excluir o recurso "${nomeDisplay}"?`,
@@ -238,12 +238,12 @@ export const Recursos: React.FC = () => {
   };
 
   const filteredRecursos = recursos.filter((recurso) => {
-    const nome = (recurso as any)?.nome_recurso ?? (recurso as any)?.nome;
-    const treinamentoNome = (recurso as any)?.treinamento_nome ?? (recurso as any)?.turma_nome ?? (recurso as any)?.treinamento?.nome;
+    const nome = recurso.nome_recurso ?? recurso.titulo;
+    const treinamentoNome = recurso.turma_nome;
     return (
       includesIgnoreCase(nome, searchTerm) ||
       includesIgnoreCase(treinamentoNome, searchTerm) ||
-      includesIgnoreCase((recurso as any)?.descricao_recurso ?? (recurso as any)?.descricao, searchTerm)
+      includesIgnoreCase(recurso.descricao_recurso ?? recurso.descricao, searchTerm)
     );
   });
 
@@ -258,7 +258,7 @@ export const Recursos: React.FC = () => {
           </h1>
           <p className="text-gray-600 mt-1">Gerencie os recursos dos treinamentos</p>
         </div>
-        
+
         <button
           onClick={() => handleOpenModal()}
           className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
@@ -294,7 +294,7 @@ export const Recursos: React.FC = () => {
                 {searchTerm ? 'Nenhum recurso encontrado' : 'Nenhum recurso cadastrado'}
               </h3>
               <p className="text-gray-600 mb-4">
-                {searchTerm 
+                {searchTerm
                   ? 'Tente ajustar os termos de busca'
                   : 'Comece criando seu primeiro recurso'
                 }
@@ -314,6 +314,9 @@ export const Recursos: React.FC = () => {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ações
+                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Recurso
                     </th>
@@ -332,36 +335,51 @@ export const Recursos: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Criado em
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ações
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredRecursos.map((recurso) => (
                     <tr key={recurso.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end space-x-2">
+                          <button
+                            onClick={() => handleOpenModal(recurso)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Editar"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(recurso)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Excluir"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <span className="text-lg mr-3">{getTypeIcon(((recurso as any)?.tipo_recurso ?? (recurso as any)?.tipo) as string)}</span>
+                          <span className="text-lg mr-3">{getTypeIcon(recurso.tipo_recurso ?? recurso.tipo ?? 'video')}</span>
                           <div>
-                            <div className="font-medium text-gray-900">{(recurso as any)?.nome_recurso ?? (recurso as any)?.nome}</div>
-                            {(recurso as any)?.descricao_recurso && (
+                            <div className="font-medium text-gray-900">{recurso.nome_recurso ?? recurso.titulo}</div>
+                            {recurso.descricao_recurso && (
                               <div className="text-sm text-gray-500 max-w-xs truncate">
-                                {(recurso as any)?.descricao_recurso}
+                                {recurso.descricao_recurso}
                               </div>
                             )}
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-gray-900">{(recurso as any)?.treinamento?.nome ?? (recurso as any)?.treinamento_nome ?? (recurso as any)?.turma_nome}</div>
+                        <div className="text-gray-900">{recurso.turma_nome}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {getTypeBadge(((recurso as any)?.tipo_recurso ?? (recurso as any)?.tipo) as string)}
+                        {getTypeBadge(recurso.tipo_recurso ?? recurso.tipo ?? 'video')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          {(recurso as any)?.acesso_previo ? (
+                          {recurso.acesso_previo ? (
                             <>
                               <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
                               <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
@@ -380,7 +398,7 @@ export const Recursos: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          {(recurso as any)?.draft ? (
+                          {recurso.draft ? (
                             <>
                               <EyeOff size={16} className="text-orange-500 mr-1" />
                               <span className="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
@@ -399,24 +417,6 @@ export const Recursos: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-gray-600">
                         {new Date(recurso.created_at).toLocaleDateString('pt-BR')}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className="flex items-center justify-end space-x-2">
-                          <button
-                            onClick={() => handleOpenModal(recurso)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Editar"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(recurso)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Excluir"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
                       </td>
                     </tr>
                   ))}
@@ -524,8 +524,8 @@ export const Recursos: React.FC = () => {
                       {formData.arquivo ? formData.arquivo.name : 'Nenhum arquivo selecionado'}
                     </span>
                   </div>
-                  {editingRecurso && (editingRecurso as any)?.arquivo_url && (
-                    <p className="mt-2 text-sm text-gray-500">Arquivo atual: <a target="_blank" rel="noopener noreferrer" className="text-primary-600 underline" href={(editingRecurso as any)?.arquivo_url}>abrir</a></p>
+                  {editingRecurso && editingRecurso.arquivo_url && (
+                    <p className="mt-2 text-sm text-gray-500">Arquivo atual: <a target="_blank" rel="noopener noreferrer" className="text-primary-600 underline" href={editingRecurso.arquivo_url}>abrir</a></p>
                   )}
                 </div>
 
@@ -559,7 +559,7 @@ export const Recursos: React.FC = () => {
                       Acesso prévio (disponível antes do início da turma)
                     </label>
                   </div>
-                  
+
                   <div className="flex items-center">
                     <input
                       id="is_draft"
@@ -573,19 +573,19 @@ export const Recursos: React.FC = () => {
                       Salvar como rascunho
                     </label>
                   </div>
-                  
+
                   {/* Informações sobre a turma selecionada */}
                   {formData.turma && (() => {
                     const turmaSelecionada = turmas.find(t => String(t.id) === String(formData.turma));
                     if (!turmaSelecionada) return null;
-                    
+
                     const dataInicio = new Date(turmaSelecionada.data_inicio);
                     const hoje = new Date();
                     hoje.setHours(0, 0, 0, 0);
                     dataInicio.setHours(0, 0, 0, 0);
-                    
+
                     const turmaJaIniciou = hoje >= dataInicio;
-                    
+
                     return (
                       <div className={`border rounded-lg p-3 ${turmaJaIniciou ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}`}>
                         <div className="flex items-center space-x-2 mb-2">
@@ -597,7 +597,7 @@ export const Recursos: React.FC = () => {
                         <p className="text-xs text-gray-600 mb-2">
                           Início: {new Date(turmaSelecionada.data_inicio).toLocaleDateString('pt-BR')}
                         </p>
-                        
+
                         {turmaJaIniciou ? (
                           <div className="text-xs text-blue-700">
                             <strong>Turma já iniciada:</strong>
@@ -618,7 +618,7 @@ export const Recursos: React.FC = () => {
                       </div>
                     );
                   })()}
-                  
+
                   {/* Aviso sobre as regras */}
                   {formData.acesso_previo && formData.is_draft && (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start space-x-2">
@@ -652,7 +652,7 @@ export const Recursos: React.FC = () => {
           </div>
         </div>
       )}
-      
+
       <ConfirmComponent />
     </div>
   );

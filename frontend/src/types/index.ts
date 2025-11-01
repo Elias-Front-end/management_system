@@ -5,6 +5,7 @@ export interface User {
   first_name: string;
   last_name: string;
   is_staff: boolean;
+  is_superuser: boolean;
 }
 
 export interface Treinamento {
@@ -64,6 +65,17 @@ export interface Aluno {
   updated_at: string;
 }
 
+export interface Administrador {
+  id: string;
+  nome: string;
+  email: string;
+  telefone?: string;
+  cargo?: string;
+  ativo: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Matricula {
   id: string;
   aluno: string;
@@ -79,6 +91,7 @@ export interface Matricula {
 export interface LoginRequest {
   username: string;
   password: string;
+  profile_type: 'admin' | 'aluno';
 }
 
 export interface LoginResponse {

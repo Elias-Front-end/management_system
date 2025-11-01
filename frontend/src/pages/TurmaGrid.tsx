@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Search, Edit, Trash2, AlertCircle, Calendar, Users, BookOpen } from 'lucide-react';
 import { turmasAPI, treinamentosAPI } from '../services/api';
@@ -44,30 +44,19 @@ export const TurmaGrid: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Validar se turmaId é um ID válido antes de carregar dados
-    if (turmaId && isValidId(turmaId)) {
-      loadData();
-    } else if (turmaId) {
-      console.error('ID da turma inválido:', turmaId);
-      setError('ID da turma inválido');
-      navigate('/dashboard');
-    }
-  }, [turmaId, searchTerm]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
       const [turmaData, allTreinamentosData] = await Promise.all([
         turmasAPI.get(turmaId!),
         treinamentosAPI.list()
       ]);
-      
+
       setTurma(turmaData);
       setAllTreinamentos(allTreinamentosData);
-      
+
       // Filtrar treinamentos da turma específica
-      const turmatreinamentos = allTreinamentosData.filter(t => 
+      const turmatreinamentos = allTreinamentosData.filter(t =>
         t.turmas?.some(turmaRef => turmaRef.id === turmaId)
       );
       setTreinamentos(turmatreinamentos);
@@ -78,7 +67,18 @@ export const TurmaGrid: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [turmaId, setIsLoading, setTurma, setAllTreinamentos, setTreinamentos, setError, notifyError]);
+
+  useEffect(() => {
+    // Validar se turmaId é um ID válido antes de carregar dados
+    if (turmaId && isValidId(turmaId)) {
+      loadData();
+    } else if (turmaId) {
+      console.error('ID da turma inválido:', turmaId);
+      setError('ID da turma inválido');
+      navigate('/dashboard');
+    }
+  }, [turmaId, searchTerm, loadData, navigate]);
 
   const handleBack = () => {
     navigate('/dashboard');
@@ -129,13 +129,13 @@ export const TurmaGrid: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!isAuthenticated || !isAdmin) {
       setError('Você não tem permissão para realizar esta ação');
       notifyError('Você não tem permissão para realizar esta ação', 'Acesso negado');
       return;
     }
-    
+
     if (!formData.nome.trim() || !formData.categoria.trim() || formData.duracao_horas <= 0) {
       setError('Todos os campos obrigatórios devem ser preenchidos');
       notifyWarning('Todos os campos obrigatórios devem ser preenchidos', 'Campos obrigatórios');
@@ -161,10 +161,10 @@ export const TurmaGrid: React.FC = () => {
         await treinamentosAPI.create(submitData);
         notifySuccess('Treinamento criado com sucesso');
       }
-      
+
       handleCloseModal();
       loadData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       const errorMessage = extractAndTranslateError(error, 'Erro ao salvar treinamento');
       setError(errorMessage);
       notifyError(errorMessage, 'Erro ao salvar treinamento');
@@ -182,11 +182,11 @@ export const TurmaGrid: React.FC = () => {
     try {
       // TODO: Implementar lógica para associar treinamento existente à turma
       // usando treinamentoId quando a API backend estiver disponível
-      console.log('Associando treinamento ID:', treinamentoId, 'à turma ID:', turmaId);
+      console.log('Adicionando treinamento:', treinamentoId);
       notifySuccess('Treinamento adicionado à turma com sucesso');
       handleCloseModal();
       loadData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       const errorMessage = extractAndTranslateError(error, 'Erro ao adicionar treinamento à turma');
       notifyError(errorMessage, 'Erro ao adicionar treinamento');
     }
@@ -210,7 +210,7 @@ export const TurmaGrid: React.FC = () => {
         await treinamentosAPI.delete(treinamento.id);
         notifySuccess('Treinamento excluído com sucesso');
         loadData();
-      } catch (error: any) {
+      } catch (error: unknown) {
         const errorMessage = extractAndTranslateError(error, 'Erro ao excluir treinamento');
         notifyError(errorMessage, 'Erro ao excluir treinamento');
       }
@@ -235,7 +235,7 @@ export const TurmaGrid: React.FC = () => {
     includesIgnoreCase(treinamento?.categoria, searchTerm)
   );
 
-  const availableTreinamentos = allTreinamentos.filter(t => 
+  const availableTreinamentos = allTreinamentos.filter(t =>
     !treinamentos.some(existing => existing.id === t.id)
   );
 
@@ -289,7 +289,7 @@ export const TurmaGrid: React.FC = () => {
             </p>
           </div>
         </div>
-        
+
         <div className="flex space-x-2">
           <button
             onClick={handleOpenAddModal}
@@ -358,8 +358,8 @@ export const TurmaGrid: React.FC = () => {
               {searchTerm ? 'Nenhum treinamento encontrado' : 'Nenhum treinamento cadastrado'}
             </h3>
             <p className="mt-1 text-sm text-gray-500">
-              {searchTerm 
-                ? 'Tente ajustar os termos de busca.' 
+              {searchTerm
+                ? 'Tente ajustar os termos de busca.'
                 : 'Comece criando um novo treinamento para esta turma.'
               }
             </p>
@@ -378,6 +378,9 @@ export const TurmaGrid: React.FC = () => {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Ações
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Nome
                   </th>
@@ -393,34 +396,11 @@ export const TurmaGrid: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Turmas
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ações
-                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredTreinamentos.map((treinamento) => (
                   <tr key={treinamento.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">{treinamento.nome}</div>
-                      {treinamento.descricao && (
-                        <div className="text-sm text-gray-500">{treinamento.descricao}</div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-gray-900">{treinamento.categoria}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                      {treinamento.duracao_horas}h
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getNivelBadge(treinamento.nivel || 'iniciante')}`}>
-                        {treinamento.nivel || 'Não definido'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                      {treinamento.turmas?.length || 0}
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-2">
                         {isAdmin && (
@@ -442,6 +422,26 @@ export const TurmaGrid: React.FC = () => {
                           </>
                         )}
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="font-medium text-gray-900">{treinamento.nome}</div>
+                      {treinamento.descricao && (
+                        <div className="text-sm text-gray-500">{treinamento.descricao}</div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-gray-900">{treinamento.categoria}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                      {treinamento.duracao_horas}h
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getNivelBadge(treinamento.nivel || 'iniciante')}`}>
+                        {treinamento.nivel || 'Não definido'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                      {treinamento.turmas?.length || 0}
                     </td>
                   </tr>
                 ))}
@@ -522,7 +522,7 @@ export const TurmaGrid: React.FC = () => {
                     <select
                       id="nivel"
                       value={formData.nivel}
-                      onChange={(e) => setFormData({ ...formData, nivel: e.target.value as any })}
+                      onChange={(e) => setFormData({ ...formData, nivel: e.target.value as 'iniciante' | 'intermediario' | 'avancado' })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       required
                       disabled={isSubmitting}

@@ -12,7 +12,7 @@ from .models import Treinamento, Turma, Recurso, Aluno, Matricula
 from .serializers import (
     UserSerializer, TreinamentoSerializer, TurmaSerializer, 
     RecursoSerializer, AlunoSerializer, MatriculaSerializer,
-    RecursoAlunoSerializer
+    RecursoAlunoSerializer, AdminSerializer, AdminPasswordUpdateSerializer
 )
 
 
@@ -25,6 +25,14 @@ class IsAdminOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return request.user.is_authenticated
         return request.user.is_staff
+
+
+class IsSuperAdminOnly(permissions.BasePermission):
+    """
+    Permissão customizada para permitir apenas super-administradores.
+    """
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated and request.user.is_superuser
 
 
 class IsAlunoOwner(permissions.BasePermission):
@@ -48,6 +56,149 @@ class IsAlunoOwner(permissions.BasePermission):
             return hasattr(request.user, 'aluno_profile') and obj == request.user.aluno_profile
         
         return False
+
+
+class AdminViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para gerenciar administradores.
+    Apenas super-administradores podem acessar.
+    """
+    serializer_class = AdminSerializer
+    permission_classes = [IsSuperAdminOnly]
+    
+    def get_queryset(self):
+        """Retorna apenas usuários que são administradores (is_staff=True)"""
+        return User.objects.filter(is_staff=True).order_by('-date_joined')
+    
+    def get_serializer_class(self):
+        """Usar serializer específico para atualização de senha"""
+        if self.action == 'update_password':
+            return AdminPasswordUpdateSerializer
+        return AdminSerializer
+    
+    def create(self, request, *args, **kwargs):
+        """Criar novo administrador"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        try:
+            admin = serializer.save()
+            return Response({
+                'message': 'Administrador criado com sucesso',
+                'admin': AdminSerializer(admin).data
+            }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({
+                'error': f'Erro ao criar administrador: {str(e)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    def update(self, request, *args, **kwargs):
+        """Atualizar administrador existente"""
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        
+        # Não permitir que um admin edite um super-admin se ele não for super-admin
+        if instance.is_superuser and not request.user.is_superuser:
+            return Response({
+                'error': 'Apenas super-administradores podem editar outros super-administradores'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Não permitir que um admin se remova o próprio acesso de super-admin
+        if instance == request.user and instance.is_superuser:
+            access_level = request.data.get('access_level')
+            if access_level == 'admin':
+                return Response({
+                    'error': 'Você não pode remover seu próprio acesso de super-administrador'
+                }, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        
+        try:
+            admin = serializer.save()
+            return Response({
+                'message': 'Administrador atualizado com sucesso',
+                'admin': AdminSerializer(admin).data
+            })
+        except Exception as e:
+            return Response({
+                'error': f'Erro ao atualizar administrador: {str(e)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    def destroy(self, request, *args, **kwargs):
+        """Deletar administrador"""
+        instance = self.get_object()
+        
+        # Não permitir que um admin delete um super-admin se ele não for super-admin
+        if instance.is_superuser and not request.user.is_superuser:
+            return Response({
+                'error': 'Apenas super-administradores podem deletar outros super-administradores'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Não permitir auto-exclusão
+        if instance == request.user:
+            return Response({
+                'error': 'Você não pode deletar sua própria conta'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Verificar se é o último super-admin
+        if instance.is_superuser:
+            super_admin_count = User.objects.filter(is_superuser=True).count()
+            if super_admin_count <= 1:
+                return Response({
+                    'error': 'Não é possível deletar o último super-administrador do sistema'
+                }, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            username = instance.username
+            instance.delete()
+            return Response({
+                'message': f'Administrador {username} foi removido com sucesso'
+            })
+        except Exception as e:
+            return Response({
+                'error': f'Erro ao deletar administrador: {str(e)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['post'])
+    def update_password(self, request, pk=None):
+        """Atualizar senha de um administrador"""
+        instance = self.get_object()
+        
+        # Não permitir que um admin altere senha de super-admin se ele não for super-admin
+        if instance.is_superuser and not request.user.is_superuser:
+            return Response({
+                'error': 'Apenas super-administradores podem alterar senhas de outros super-administradores'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        try:
+            password = serializer.validated_data['password']
+            instance.set_password(password)
+            instance.save()
+            
+            return Response({
+                'message': 'Senha atualizada com sucesso'
+            })
+        except Exception as e:
+            return Response({
+                'error': f'Erro ao atualizar senha: {str(e)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        """Estatísticas dos administradores"""
+        total_admins = User.objects.filter(is_staff=True).count()
+        super_admins = User.objects.filter(is_superuser=True).count()
+        regular_admins = total_admins - super_admins
+        
+        return Response({
+            'total_admins': total_admins,
+            'super_admins': super_admins,
+            'regular_admins': regular_admins
+        })
 
 
 class TreinamentoViewSet(viewsets.ModelViewSet):
@@ -318,10 +469,17 @@ class AuthViewSet(viewsets.ViewSet):
     def login(self, request):
         username = request.data.get('username')
         password = request.data.get('password')
+        profile_type = request.data.get('profile_type')  # 'admin' ou 'aluno'
         
         if not username or not password:
             return Response(
                 {'error': 'Username e password são obrigatórios'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if not profile_type or profile_type not in ['admin', 'aluno']:
+            return Response(
+                {'error': 'Tipo de perfil é obrigatório e deve ser "admin" ou "aluno"'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -337,15 +495,30 @@ class AuthViewSet(viewsets.ViewSet):
                 pass
         
         if user:
+            # Verificar se é aluno ou admin
+            is_admin = user.is_staff
+            has_aluno_profile = hasattr(user, 'aluno_profile')
+            
+            # Validar correspondência entre tipo selecionado e tipo real do usuário
+            if profile_type == 'admin' and not is_admin:
+                return Response(
+                    {'error': 'Usuário não possui permissões de administrador'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            if profile_type == 'aluno' and (is_admin or not has_aluno_profile):
+                return Response(
+                    {'error': 'Usuário não é um aluno cadastrado no sistema'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
             login(request, user)
             
-            # Verificar se é aluno ou admin
             user_data = UserSerializer(user).data
-            is_admin = user.is_staff
             
             # Se for aluno, buscar dados do perfil
             aluno_data = None
-            if not is_admin and hasattr(user, 'aluno_profile'):
+            if not is_admin and has_aluno_profile:
                 aluno_data = AlunoSerializer(user.aluno_profile).data
             
             return Response({
@@ -370,6 +543,7 @@ class AuthViewSet(viewsets.ViewSet):
         if request.user.is_authenticated:
             user_data = UserSerializer(request.user).data
             is_admin = request.user.is_staff
+            is_superuser = request.user.is_superuser
             
             # Se for aluno, buscar dados do perfil
             aluno_data = None
@@ -379,6 +553,7 @@ class AuthViewSet(viewsets.ViewSet):
             return Response({
                 'user': user_data,
                 'is_admin': is_admin,
+                'is_superuser': is_superuser,
                 'aluno': aluno_data
             })
         else:

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Edit, Trash2, Users, Calendar, AlertCircle } from 'lucide-react';
 import { turmasAPI, treinamentosAPI } from '../services/api';
 import { extractAndTranslateError } from '../utils/errorMessages';
@@ -38,11 +38,7 @@ export const Turmas: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [searchTerm]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
       const [turmasData, treinamentosData] = await Promise.all([
@@ -58,7 +54,11 @@ export const Turmas: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [searchTerm, notifyError, setIsLoading, setTurmas, setTreinamentos, setError]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleOpenModal = (turma?: Turma) => {
     if (turma) {
@@ -66,7 +66,7 @@ export const Turmas: React.FC = () => {
       setFormData({
         nome: turma.nome,
         descricao: '',
-        treinamento: String((turma as any).treinamento ?? ''),
+        treinamento: String(turma.treinamento ?? ''),
         data_inicio: turma.data_inicio,
         data_conclusao: turma.data_conclusao,
         link_acesso: turma.link_acesso || '',
@@ -102,14 +102,14 @@ export const Turmas: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Verificar se o usuário é admin
     if (!isAuthenticated || !isAdmin) {
       setError('Você não tem permissão para realizar esta ação');
       notifyError('Você não tem permissão para realizar esta ação', 'Acesso negado');
       return;
     }
-    
+
     if (!formData.nome.trim() || !formData.treinamento || !formData.data_inicio || !formData.data_conclusao) {
       setError('Todos os campos obrigatórios devem ser preenchidos');
       notifyWarning('Todos os campos obrigatórios devem ser preenchidos', 'Campos obrigatórios');
@@ -126,7 +126,13 @@ export const Turmas: React.FC = () => {
     setError(null);
 
     try {
-      const submitData: any = {
+      const submitData: {
+        nome: string;
+        treinamento: string;
+        data_inicio: string;
+        data_conclusao: string;
+        link_acesso: string | null;
+      } = {
         nome: formData.nome.trim(),
         treinamento: formData.treinamento,
         data_inicio: formData.data_inicio,
@@ -139,11 +145,11 @@ export const Turmas: React.FC = () => {
       } else {
         await turmasAPI.create(submitData);
       }
-      
+
       notifySuccess(editingTurma ? 'Turma atualizada com sucesso' : 'Turma criada com sucesso');
       handleCloseModal();
       loadData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       const errorMessage = extractAndTranslateError(error, 'Erro ao salvar turma');
       setError(errorMessage);
       notifyError(errorMessage, 'Erro ao salvar turma');
@@ -183,7 +189,7 @@ export const Turmas: React.FC = () => {
   const getStatusBadge = (turma: Turma) => {
     const now = new Date();
     const inicio = new Date(turma.data_inicio);
-    const fim = new Date((turma as any).data_conclusao);
+    const fim = new Date(turma.data_conclusao);
 
     if (now < inicio) {
       return <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">Aguardando</span>;
@@ -210,7 +216,7 @@ export const Turmas: React.FC = () => {
           </h1>
           <p className="text-gray-600 mt-1">Gerencie as turmas dos treinamentos</p>
         </div>
-        
+
         <button
           onClick={() => handleOpenModal()}
           className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
@@ -246,7 +252,7 @@ export const Turmas: React.FC = () => {
                 {searchTerm ? 'Nenhuma turma encontrada' : 'Nenhuma turma cadastrada'}
               </h3>
               <p className="text-gray-600 mb-4">
-                {searchTerm 
+                {searchTerm
                   ? 'Tente ajustar os termos de busca'
                   : 'Comece criando sua primeira turma'
                 }
@@ -267,10 +273,13 @@ export const Turmas: React.FC = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Nome
+                      Ações
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Treinamento
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Nome
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Período
@@ -284,19 +293,34 @@ export const Turmas: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Link de Acesso
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ações
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredTurmas.map((turma) => (
                     <tr key={turma.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium text-gray-900">{turma.nome}</div>
+                      <td className="px-6 py-4 whitespace-nowrap text-left">
+                        <div className="flex items-center justify-start space-x-2">
+                          <button
+                            onClick={() => handleOpenModal(turma)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Editar"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(turma)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Excluir"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-gray-900">{turma.treinamento_nome}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="font-medium text-gray-900">{turma.nome}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-gray-600">
@@ -329,24 +353,6 @@ export const Turmas: React.FC = () => {
                         ) : (
                           <span className="text-gray-400 text-sm">—</span>
                         )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className="flex items-center justify-end space-x-2">
-                          <button
-                            onClick={() => handleOpenModal(turma)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Editar"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(turma)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Excluir"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
                       </td>
                     </tr>
                   ))}
@@ -495,7 +501,7 @@ export const Turmas: React.FC = () => {
           </div>
         </div>
       )}
-      
+
       <ConfirmComponent />
     </div>
   );

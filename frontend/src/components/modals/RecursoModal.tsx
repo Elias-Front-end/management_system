@@ -33,11 +33,11 @@ export const RecursoModal: React.FC<RecursoModalProps> = ({
   recurso,
   turmaId,
   treinamentoId,
-  turmasLista: _turmasLista
+  // turmasLista não é utilizada, então removemos o parâmetro
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState<RecursoFormData>({
     titulo: '',
     descricao: '',
@@ -61,7 +61,7 @@ export const RecursoModal: React.FC<RecursoModalProps> = ({
         acesso_previo: recurso.acesso_previo,
         draft: recurso.draft,
         turma: recurso.turma || '',
-        treinamento: (recurso as any).treinamento || ''
+        treinamento: recurso.treinamento || ''
       });
     } else {
       setFormData({
@@ -91,7 +91,7 @@ export const RecursoModal: React.FC<RecursoModalProps> = ({
       submitData.append('tipo_recurso', formData.tipo);
       submitData.append('acesso_previo', formData.acesso_previo.toString());
       submitData.append('draft', formData.draft.toString());
-      
+
       // Enviar treinamento ou turma dependendo do contexto
       if (formData.treinamento) {
         submitData.append('treinamento', formData.treinamento);
@@ -115,7 +115,7 @@ export const RecursoModal: React.FC<RecursoModalProps> = ({
 
       onSuccess();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao salvar recurso:', error);
       const errorMessage = extractAndTranslateError(error);
       setError(errorMessage);
@@ -193,7 +193,7 @@ export const RecursoModal: React.FC<RecursoModalProps> = ({
               <select
                 id="tipo"
                 value={formData.tipo}
-                onChange={(e) => setFormData({ ...formData, tipo: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, tipo: e.target.value as 'video' | 'arquivo_pdf' | 'arquivo_zip' })}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white"
                 required
                 disabled={isSubmitting}

@@ -1,8 +1,8 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    TreinamentoViewSet, TurmaViewSet, RecursoViewSet, 
-    AlunoViewSet, MatriculaViewSet, AuthViewSet, get_csrf
+    TreinamentoViewSet, TurmaViewSet, RecursoViewSet,
+    AlunoViewSet, MatriculaViewSet, AuthViewSet, AdminViewSet, get_csrf
 )
 
 router = DefaultRouter()
@@ -11,6 +11,7 @@ router.register(r'turmas', TurmaViewSet)
 router.register(r'recursos', RecursoViewSet)
 router.register(r'alunos', AlunoViewSet)
 router.register(r'matriculas', MatriculaViewSet)
+router.register(r'administradores', AdminViewSet, basename='administradores')
 router.register(r'auth', AuthViewSet, basename='auth')
 
 urlpatterns = [

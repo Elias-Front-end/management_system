@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Edit, Trash2, User, Mail, AlertCircle } from 'lucide-react';
 import { alunosAPI } from '../services/api';
 import { extractAndTranslateError } from '../utils/errorMessages';
@@ -31,11 +31,7 @@ export const Alunos: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadAlunos();
-  }, [searchTerm]);
-
-  const loadAlunos = async () => {
+  const loadAlunos = useCallback(async () => {
     try {
       setIsLoading(true);
       const data = await alunosAPI.list(searchTerm || undefined);
@@ -47,7 +43,11 @@ export const Alunos: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [searchTerm, notifyError]);
+
+  useEffect(() => {
+    loadAlunos();
+  }, [loadAlunos]);
 
   const handleOpenModal = (aluno?: Aluno) => {
     if (aluno) {
@@ -85,7 +85,7 @@ export const Alunos: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.nome.trim() || !formData.email.trim()) {
       setError('Nome e Email são obrigatórios');
       notifyWarning('Nome e Email são obrigatórios', 'Campos obrigatórios');
@@ -96,7 +96,11 @@ export const Alunos: React.FC = () => {
     setError(null);
 
   try {
-      const submitData: any = { nome: formData.nome, email: formData.email, telefone: formData.telefone };
+      const submitData: { nome: string; email: string; telefone: string; password?: string } = { 
+        nome: formData.nome, 
+        email: formData.email, 
+        telefone: formData.telefone 
+      };
       // Removida a lógica de username
       if (formData.password && formData.password.trim().length > 0) {
         submitData.password = formData.password.trim();
@@ -107,11 +111,11 @@ export const Alunos: React.FC = () => {
       } else {
         await alunosAPI.create(submitData);
       }
-      
+
       notifySuccess(editingAluno ? 'Aluno atualizado com sucesso' : 'Aluno criado com sucesso');
       handleCloseModal();
       loadAlunos();
-    } catch (error: any) {
+    } catch (error: unknown) {
       const errorMessage = extractAndTranslateError(error, 'Erro ao salvar aluno');
       setError(errorMessage);
       notifyError(errorMessage, 'Erro ao salvar aluno');
@@ -176,7 +180,7 @@ export const Alunos: React.FC = () => {
               className="input-modern pl-12"
             />
           </div>
-          
+
           {/* Add Button */}
           <button
             onClick={() => handleOpenModal()}
@@ -207,7 +211,7 @@ export const Alunos: React.FC = () => {
                 {searchTerm ? 'Nenhum aluno encontrado' : 'Nenhum aluno cadastrado'}
               </h3>
               <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                {searchTerm 
+                {searchTerm
                   ? 'Tente ajustar os termos de busca para encontrar o aluno desejado'
                   : 'Comece criando seu primeiro aluno para gerenciar o sistema'
                 }
@@ -227,16 +231,34 @@ export const Alunos: React.FC = () => {
               <table className="table-modern">
                 <thead>
                   <tr>
+                    <th className="text-left">Ações</th>
                     <th className="text-left">Aluno</th>
                     <th className="text-left">Telefone</th>
                     <th className="text-left">Email</th>
                     <th className="text-left">Cadastrado em</th>
-                    <th className="text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredAlunos.map((aluno, index) => (
                     <tr key={aluno.id} style={{ animationDelay: `${index * 50}ms` }}>
+                      <td>
+                        <div className="flex items-center justify-start space-x-2">
+                          <button
+                            onClick={() => handleOpenModal(aluno)}
+                            className="btn-icon btn-icon-blue"
+                            title="Editar aluno"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(aluno)}
+                            className="btn-icon btn-icon-red"
+                            title="Excluir aluno"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
                       <td>
                         <div className="flex items-center">
                           <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg mr-4">
@@ -267,24 +289,6 @@ export const Alunos: React.FC = () => {
                         <span className="text-sm text-gray-600">
                           {new Date(aluno.created_at).toLocaleDateString('pt-BR')}
                         </span>
-                      </td>
-                      <td>
-                        <div className="flex items-center justify-end space-x-2">
-                          <button
-                            onClick={() => handleOpenModal(aluno)}
-                            className="btn-icon btn-icon-blue"
-                            title="Editar aluno"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(aluno)}
-                            className="btn-icon btn-icon-red"
-                            title="Excluir aluno"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
                       </td>
                     </tr>
                   ))}
@@ -424,7 +428,7 @@ export const Alunos: React.FC = () => {
           </div>
         </div>
       )}
-      
+
       <ConfirmComponent />
     </div>
   );

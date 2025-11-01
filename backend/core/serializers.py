@@ -1,7 +1,10 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.utils.text import slugify
+import re
 from .models import Treinamento, Turma, Recurso, Aluno, Matricula
 
 
@@ -12,10 +15,199 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+class AdminSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, min_length=8)
+    password_confirm = serializers.CharField(write_only=True)
+    access_level = serializers.ChoiceField(
+        choices=[('admin', 'Administrador'), ('super_admin', 'Super Administrador')],
+        write_only=True
+    )
+    full_name = serializers.CharField(source='get_full_name', read_only=True)
+    
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name', 
+            'password', 'password_confirm', 'access_level', 'full_name',
+            'is_staff', 'is_superuser', 'date_joined', 'last_login'
+        ]
+        read_only_fields = ['id', 'is_staff', 'is_superuser', 'date_joined', 'last_login']
+        extra_kwargs = {
+            'email': {'required': True},
+            'first_name': {'required': True},
+            'last_name': {'required': True},
+        }
+    
+    def validate_email(self, value):
+        """Validar se é um email institucional"""
+        if not value:
+            raise serializers.ValidationError("Email é obrigatório.")
+        
+        # Verificar se já existe outro usuário com este email
+        if self.instance:
+            if User.objects.exclude(pk=self.instance.pk).filter(email=value).exists():
+                raise serializers.ValidationError("Este email já está em uso.")
+        else:
+            if User.objects.filter(email=value).exists():
+                raise serializers.ValidationError("Este email já está em uso.")
+        
+        return value
+    
+    def validate_username(self, value):
+        """Validar username único"""
+        if not value:
+            raise serializers.ValidationError("Nome de usuário é obrigatório.")
+        
+        # Verificar se já existe outro usuário com este username
+        if self.instance:
+            if User.objects.exclude(pk=self.instance.pk).filter(username=value).exists():
+                raise serializers.ValidationError("Este nome de usuário já está em uso.")
+        else:
+            if User.objects.filter(username=value).exists():
+                raise serializers.ValidationError("Este nome de usuário já está em uso.")
+        
+        return value
+    
+    def validate_password(self, value):
+        """Validar força da senha"""
+        if len(value) < 8:
+            raise serializers.ValidationError("A senha deve ter pelo menos 8 caracteres.")
+        
+        # Verificar se tem pelo menos uma letra maiúscula
+        if not re.search(r'[A-Z]', value):
+            raise serializers.ValidationError("A senha deve conter pelo menos uma letra maiúscula.")
+        
+        # Verificar se tem pelo menos uma letra minúscula
+        if not re.search(r'[a-z]', value):
+            raise serializers.ValidationError("A senha deve conter pelo menos uma letra minúscula.")
+        
+        # Verificar se tem pelo menos um número
+        if not re.search(r'\d', value):
+            raise serializers.ValidationError("A senha deve conter pelo menos um número.")
+        
+        # Verificar se tem pelo menos um caractere especial
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', value):
+            raise serializers.ValidationError("A senha deve conter pelo menos um caractere especial.")
+        
+        # Usar validação do Django também
+        try:
+            validate_password(value)
+        except ValidationError as e:
+            raise serializers.ValidationError(e.messages)
+        
+        return value
+    
+    def validate(self, attrs):
+        """Validação geral"""
+        # Verificar se as senhas coincidem (apenas na criação)
+        if not self.instance:  # Criação
+            password = attrs.get('password')
+            password_confirm = attrs.get('password_confirm')
+            
+            if password != password_confirm:
+                raise serializers.ValidationError({
+                    'password_confirm': 'As senhas não coincidem.'
+                })
+        
+        return attrs
+    
+    def create(self, validated_data):
+        """Criar novo administrador"""
+        # Remover campos que não são do modelo User
+        password = validated_data.pop('password')
+        validated_data.pop('password_confirm')
+        access_level = validated_data.pop('access_level')
+        
+        # Criar usuário
+        user = User.objects.create_user(**validated_data)
+        user.set_password(password)
+        
+        # Definir níveis de acesso
+        if access_level == 'super_admin':
+            user.is_staff = True
+            user.is_superuser = True
+        else:  # admin
+            user.is_staff = True
+            user.is_superuser = False
+        
+        user.save()
+        return user
+    
+    def update(self, instance, validated_data):
+        """Atualizar administrador existente"""
+        # Remover campos especiais se existirem
+        validated_data.pop('password', None)
+        validated_data.pop('password_confirm', None)
+        access_level = validated_data.pop('access_level', None)
+        
+        # Atualizar campos básicos
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        # Atualizar nível de acesso se fornecido
+        if access_level:
+            if access_level == 'super_admin':
+                instance.is_staff = True
+                instance.is_superuser = True
+            else:  # admin
+                instance.is_staff = True
+                instance.is_superuser = False
+        
+        instance.save()
+        return instance
+
+
+class AdminPasswordUpdateSerializer(serializers.Serializer):
+    """Serializer para atualizar apenas a senha de um administrador"""
+    password = serializers.CharField(write_only=True, min_length=8)
+    password_confirm = serializers.CharField(write_only=True)
+    
+    def validate_password(self, value):
+        """Validar força da senha"""
+        if len(value) < 8:
+            raise serializers.ValidationError("A senha deve ter pelo menos 8 caracteres.")
+        
+        # Verificar se tem pelo menos uma letra maiúscula
+        if not re.search(r'[A-Z]', value):
+            raise serializers.ValidationError("A senha deve conter pelo menos uma letra maiúscula.")
+        
+        # Verificar se tem pelo menos uma letra minúscula
+        if not re.search(r'[a-z]', value):
+            raise serializers.ValidationError("A senha deve conter pelo menos uma letra minúscula.")
+        
+        # Verificar se tem pelo menos um número
+        if not re.search(r'\d', value):
+            raise serializers.ValidationError("A senha deve conter pelo menos um número.")
+        
+        # Verificar se tem pelo menos um caractere especial
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', value):
+            raise serializers.ValidationError("A senha deve conter pelo menos um caractere especial.")
+        
+        # Usar validação do Django também
+        try:
+            validate_password(value)
+        except ValidationError as e:
+            raise serializers.ValidationError(e.messages)
+        
+        return value
+    
+    def validate(self, attrs):
+        """Validar se as senhas coincidem"""
+        password = attrs.get('password')
+        password_confirm = attrs.get('password_confirm')
+        
+        if password != password_confirm:
+            raise serializers.ValidationError({
+                'password_confirm': 'As senhas não coincidem.'
+            })
+        
+        return attrs
+
+
 class TreinamentoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Treinamento
-        fields = ['id', 'nome', 'descricao', 'created_at', 'updated_at']
+        fields = ['id', 'nome', 'descricao', 'nivel', 'created_at', 'updated_at']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def validate_nome(self, value):

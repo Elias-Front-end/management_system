@@ -14,18 +14,20 @@ interface CardTreinamentoProps {
   showActions?: boolean;
   onRecursoEdit?: (recurso: Recurso) => void;
   onRecursoDelete?: (recurso: Recurso) => void;
+  onAlunosClick?: (treinamento: Treinamento) => void;
+  onTurmasClick?: (treinamento: Treinamento) => void;
 }
 
 export const CardTreinamento: React.FC<CardTreinamentoProps> = ({
-  treinamento, 
+  treinamento,
   turmasCount = 0,
   alunosCount = 0,
   className = '',
   onEdit,
   onDelete,
   showActions = true,
-  onRecursoEdit: _onRecursoEdit,
-  onRecursoDelete: _onRecursoDelete
+  onAlunosClick,
+  onTurmasClick
 }) => {
   // const { notifyError } = useNotificationStore();
   const navigate = useNavigate();
@@ -39,6 +41,16 @@ export const CardTreinamento: React.FC<CardTreinamentoProps> = ({
     e.stopPropagation();
     onEdit?.(treinamento);
   }, [onEdit, treinamento]);
+
+  const handleAlunosClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onAlunosClick?.(treinamento);
+  }, [onAlunosClick, treinamento]);
+
+  const handleTurmasClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onTurmasClick?.(treinamento);
+  }, [onTurmasClick, treinamento]);
 
   const formatDate = useCallback((dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR', {
@@ -55,18 +67,37 @@ export const CardTreinamento: React.FC<CardTreinamentoProps> = ({
 
   // Memoizar valores computados
   const formattedDate = useMemo(() => formatDate(treinamento.created_at), [formatDate, treinamento.created_at]);
-  const truncatedDescription = useMemo(() => 
-    treinamento.descricao ? truncateDescription(treinamento.descricao) : 'Sem descrição', 
+  const truncatedDescription = useMemo(() =>
+    treinamento.descricao ? truncateDescription(treinamento.descricao) : 'Sem descrição',
     [truncateDescription, treinamento.descricao]
   );
   const statusBadge = useMemo(() => ({
     className: `inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
-      turmasCount > 0 
-        ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300' 
+      turmasCount > 0
+        ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300'
         : 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300'
     }`,
     text: turmasCount > 0 ? 'Ativo' : 'Sem turmas'
   }), [turmasCount]);
+
+  const nivelBadge = useMemo(() => {
+    const nivel = treinamento.nivel || 'iniciante';
+    const configs = {
+      iniciante: {
+        className: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
+        text: 'Básico'
+      },
+      intermediario: {
+        className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
+        text: 'Intermediário'
+      },
+      avancado: {
+        className: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
+        text: 'Avançado'
+      }
+    };
+    return configs[nivel as keyof typeof configs] || configs.iniciante;
+  }, [treinamento.nivel]);
 
   return (
     <div
@@ -78,6 +109,10 @@ export const CardTreinamento: React.FC<CardTreinamentoProps> = ({
         p-6 ${className}
       `}
     >
+      {/* Nível do Treinamento */}
+      <span className={`absolute top-4 right-4 inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${nivelBadge.className}`}>
+        {nivelBadge.text}
+      </span>
       {/* Header do Card */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3 flex-1 min-w-0">
@@ -93,7 +128,7 @@ export const CardTreinamento: React.FC<CardTreinamentoProps> = ({
             </p>
           </div>
         </div>
-        
+
         {/* Actions Menu */}
         {showActions && (onEdit || onDelete) && (
           <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -112,21 +147,27 @@ export const CardTreinamento: React.FC<CardTreinamentoProps> = ({
 
       {/* Estatísticas */}
       <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-          <Calendar size={16} className="text-blue-500" />
-          <div>
-            <span className="block text-xs text-gray-500 dark:text-gray-500">Turmas</span>
-            <span className="font-medium">{turmasCount}</span>
+        <button
+          onClick={handleTurmasClick}
+          className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors cursor-pointer group"
+        >
+          <Calendar size={16} className="text-blue-500 group-hover:text-blue-600" />
+          <div className="text-left">
+            <span className="block text-xs text-gray-500 dark:text-gray-500 group-hover:text-blue-600">Turmas</span>
+            <span className="font-medium group-hover:text-blue-600">{turmasCount}</span>
           </div>
-        </div>
+        </button>
 
-        <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-          <Users size={16} className="text-green-500" />
-          <div>
-            <span className="block text-xs text-gray-500 dark:text-gray-500">Alunos</span>
-            <span className="font-medium">{alunosCount}</span>
+        <button
+          onClick={handleAlunosClick}
+          className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 p-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors cursor-pointer group"
+        >
+          <Users size={16} className="text-green-500 group-hover:text-green-600" />
+          <div className="text-left">
+            <span className="block text-xs text-gray-500 dark:text-gray-500 group-hover:text-green-600">Alunos</span>
+            <span className="font-medium group-hover:text-green-600">{alunosCount}</span>
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Status Badge */}
@@ -155,8 +196,6 @@ export const CardTreinamento: React.FC<CardTreinamentoProps> = ({
           </div>
         </div>
       </div>
-
-
 
       {/* Hover Effect Overlay */}
       <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Search, Edit, Trash2, Users, Calendar, AlertCircle, BookOpen, FileText, Video, Archive } from 'lucide-react';
 import { treinamentosAPI, turmasAPI, recursosAPI } from '../services/api';
@@ -40,13 +40,13 @@ export const TreinamentoGrid: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'turmas' | 'recursos'>('turmas');
-  
+
   // Modais
   const [showTurmaModal, setShowTurmaModal] = useState(false);
   const [showRecursoModal, setShowRecursoModal] = useState(false);
   const [editingTurma, setEditingTurma] = useState<Turma | null>(null);
   const [editingRecurso, setEditingRecurso] = useState<Recurso | null>(null);
-  
+
   // Form data
   const [turmaFormData, setTurmaFormData] = useState<TurmaFormData>({
     nome: '',
@@ -55,7 +55,7 @@ export const TreinamentoGrid: React.FC = () => {
     data_conclusao: '',
     link_acesso: '',
   });
-  
+
   const [recursoFormData, setRecursoFormData] = useState<RecursoFormData>({
     titulo: '',
     descricao: '',
@@ -63,22 +63,18 @@ export const TreinamentoGrid: React.FC = () => {
     url: '',
     arquivo: null,
   });
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Validar se treinamentoId é um ID válido antes de carregar dados
-    if (treinamentoId && isValidId(treinamentoId)) {
-      loadData();
-    } else if (treinamentoId) {
+  const loadData = useCallback(async () => {
+    if (!treinamentoId) {
       console.error('ID do treinamento inválido:', treinamentoId);
       setError('ID do treinamento inválido');
+      notifyError('ID do treinamento inválido');
       navigate('/dashboard');
+      return;
     }
-  }, [treinamentoId, searchTerm]);
-
-  const loadData = async () => {
     try {
       setIsLoading(true);
       const [treinamentoData, allRecursosData, allTurmasData] = await Promise.all([
@@ -86,16 +82,16 @@ export const TreinamentoGrid: React.FC = () => {
         recursosAPI.list(),
         turmasAPI.list()
       ]);
-      
+
       setTreinamento(treinamentoData);
-      
+
       // Filtrar recursos relacionados ao treinamento
-      const relatedRecursos = allRecursosData.filter(recurso => 
+      const relatedRecursos = allRecursosData.filter(recurso =>
         recurso.treinamento === treinamentoId ||
         recurso.treinamento?.toString() === treinamentoId
       );
       setRecursos(relatedRecursos);
-      
+
       // Filtrar turmas relacionadas ao treinamento
       const relatedTurmas = allTurmasData.filter(turma => turma.treinamento === treinamentoId);
       setTurmas(relatedTurmas);
@@ -106,7 +102,18 @@ export const TreinamentoGrid: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [treinamentoId, setIsLoading, setTreinamento, setRecursos, setTurmas, setError, notifyError, navigate]);
+
+  useEffect(() => {
+    // Validar se treinamentoId é um ID válido antes de carregar dados
+    if (treinamentoId && isValidId(treinamentoId)) {
+      loadData();
+    } else if (treinamentoId) {
+      console.error('ID do treinamento inválido:', treinamentoId);
+      setError('ID do treinamento inválido');
+      navigate('/dashboard');
+    }
+  }, [treinamentoId, searchTerm, loadData, navigate]);
 
   const handleBack = () => {
     navigate('/dashboard');
@@ -139,13 +146,13 @@ export const TreinamentoGrid: React.FC = () => {
 
   const handleSubmitTurma = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!isAuthenticated || !isAdmin) {
       setError('Você não tem permissão para realizar esta ação');
       notifyError('Você não tem permissão para realizar esta ação', 'Acesso negado');
       return;
     }
-    
+
     if (!turmaFormData.nome.trim() || !turmaFormData.data_inicio || !turmaFormData.data_conclusao) {
       setError('Todos os campos obrigatórios devem ser preenchidos');
       notifyWarning('Todos os campos obrigatórios devem ser preenchidos', 'Campos obrigatórios');
@@ -177,10 +184,10 @@ export const TreinamentoGrid: React.FC = () => {
         await turmasAPI.create(submitData);
         notifySuccess('Turma criada com sucesso');
       }
-      
+
       handleCloseTurmaModal();
       loadData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       const errorMessage = extractAndTranslateError(error, 'Erro ao salvar turma');
       setError(errorMessage);
       notifyError(errorMessage, 'Erro ao salvar turma');
@@ -207,7 +214,7 @@ export const TreinamentoGrid: React.FC = () => {
         await turmasAPI.delete(turma.id);
         notifySuccess('Turma excluída com sucesso');
         loadData();
-      } catch (error: any) {
+      } catch (error: unknown) {
         const errorMessage = extractAndTranslateError(error, 'Erro ao excluir turma');
         notifyError(errorMessage, 'Erro ao excluir turma');
       }
@@ -241,13 +248,13 @@ export const TreinamentoGrid: React.FC = () => {
 
   const handleSubmitRecurso = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!isAuthenticated || !isAdmin) {
       setError('Você não tem permissão para realizar esta ação');
       notifyError('Você não tem permissão para realizar esta ação', 'Acesso negado');
       return;
     }
-    
+
     if (!recursoFormData.titulo.trim()) {
       setError('O título é obrigatório');
       notifyWarning('O título é obrigatório', 'Campo obrigatório');
@@ -269,11 +276,11 @@ export const TreinamentoGrid: React.FC = () => {
       formData.append('descricao', recursoFormData.descricao?.trim() || '');
       formData.append('tipo', recursoFormData.tipo);
       formData.append('treinamento', treinamentoId!);
-      
+
       if (recursoFormData.url?.trim()) {
         formData.append('url', recursoFormData.url.trim());
       }
-      
+
       if (recursoFormData.arquivo) {
         formData.append('arquivo', recursoFormData.arquivo);
       }
@@ -285,10 +292,10 @@ export const TreinamentoGrid: React.FC = () => {
         await recursosAPI.create(formData);
         notifySuccess('Recurso criado com sucesso');
       }
-      
+
       handleCloseRecursoModal();
       loadData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       const errorMessage = extractAndTranslateError(error, 'Erro ao salvar recurso');
       setError(errorMessage);
       notifyError(errorMessage, 'Erro ao salvar recurso');
@@ -315,7 +322,7 @@ export const TreinamentoGrid: React.FC = () => {
         await recursosAPI.delete(recurso.id);
         notifySuccess('Recurso excluído com sucesso');
         loadData();
-      } catch (error: any) {
+      } catch (error: unknown) {
         const errorMessage = extractAndTranslateError(error, 'Erro ao excluir recurso');
         notifyError(errorMessage, 'Erro ao excluir recurso');
       }
@@ -450,7 +457,7 @@ export const TreinamentoGrid: React.FC = () => {
             </p>
           </div>
         </div>
-        
+
         <div className="flex space-x-2">
           <button
             onClick={() => handleOpenTurmaModal()}
@@ -548,8 +555,8 @@ export const TreinamentoGrid: React.FC = () => {
                 {searchTerm ? 'Nenhuma turma encontrada' : 'Nenhuma turma cadastrada'}
               </h3>
               <p className="mt-1 text-sm text-gray-500">
-                {searchTerm 
-                  ? 'Tente ajustar os termos de busca.' 
+                {searchTerm
+                  ? 'Tente ajustar os termos de busca.'
                   : 'Comece criando uma nova turma para este treinamento.'
                 }
               </p>
@@ -569,6 +576,9 @@ export const TreinamentoGrid: React.FC = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ações
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Nome
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -583,14 +593,33 @@ export const TreinamentoGrid: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Link de Acesso
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ações
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredTurmas.map((turma) => (
                     <tr key={turma.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
+                        <div className="flex justify-start space-x-2">
+                          {isAdmin && (
+                            <>
+                              <button
+                                onClick={() => handleOpenTurmaModal(turma)}
+                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="Editar"
+                              >
+                                <Edit size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTurma(turma)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Excluir"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="font-medium text-gray-900">{turma.nome}</div>
                       </td>
@@ -622,28 +651,6 @@ export const TreinamentoGrid: React.FC = () => {
                           <span className="text-gray-400">-</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end space-x-2">
-                          {isAdmin && (
-                            <>
-                              <button
-                                onClick={() => handleOpenTurmaModal(turma)}
-                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                title="Editar"
-                              >
-                                <Edit size={16} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteTurma(turma)}
-                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                title="Excluir"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -659,8 +666,8 @@ export const TreinamentoGrid: React.FC = () => {
                 {searchTerm ? 'Nenhum recurso encontrado' : 'Nenhum recurso cadastrado'}
               </h3>
               <p className="mt-1 text-sm text-gray-500">
-                {searchTerm 
-                  ? 'Tente ajustar os termos de busca.' 
+                {searchTerm
+                  ? 'Tente ajustar os termos de busca.'
                   : 'Comece criando um novo recurso para este treinamento.'
                 }
               </p>
@@ -868,19 +875,18 @@ export const TreinamentoGrid: React.FC = () => {
                   <select
                     id="tipo"
                     value={recursoFormData.tipo}
-                    onChange={(e) => setRecursoFormData({ ...recursoFormData, tipo: e.target.value as any })}
+                    onChange={(e) => setRecursoFormData({ ...recursoFormData, tipo: e.target.value as 'video' | 'documento' | 'arquivo' })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     required
                     disabled={isSubmitting}
                   >
-                    <option value="documento">Documento</option>
+                    <option value="arquivo_pdf">Documento PDF</option>
                     <option value="video">Vídeo</option>
-                    <option value="link">Link</option>
-                    <option value="arquivo">Arquivo</option>
+                    <option value="arquivo_zip">Arquivo ZIP</option>
                   </select>
                 </div>
 
-                {(recursoFormData.tipo === 'link' || recursoFormData.tipo === 'video') && (
+                {recursoFormData.tipo === 'video' && (
                   <div>
                     <label htmlFor="url" className="block text-sm font-medium text-gray-700 mb-1">
                       URL *
@@ -891,7 +897,8 @@ export const TreinamentoGrid: React.FC = () => {
                       value={recursoFormData.url}
                       onChange={(e) => setRecursoFormData({ ...recursoFormData, url: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      required={recursoFormData.tipo === 'link'}
+                      required={recursoFormData.tipo === 'video'}
+
                       disabled={isSubmitting}
                     />
                   </div>

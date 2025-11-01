@@ -21,7 +21,7 @@ import { TreinamentoGrid } from './pages/TreinamentoGrid';
 // Redirect Based on Profile Component
 const RedirectBasedOnProfile: React.FC = () => {
   const { isAdmin } = useAuthStore();
-  
+
   if (isAdmin) {
     return <Navigate to="/dashboard" replace />;
   } else {
@@ -85,7 +85,7 @@ function App() {
           <Routes>
             {/* Public Routes */}
             <Route path="/login" element={<Login />} />
-            
+
             {/* Protected Routes */}
             <Route
               path="/"
@@ -97,12 +97,12 @@ function App() {
                 </ProtectedRoute>
               }
             />
-          
+
           <Route
             path="/dashboard"
             element={
               <AdminRoute>
-                <AdminLayout title="Dashboard">
+                <AdminLayout>
                   <Dashboard />
                 </AdminLayout>
               </AdminRoute>
@@ -209,7 +209,7 @@ function App() {
           />
 
           {/* Catch all route */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
 
         {/* Global Notifications - mounted once to cover all routes including Login */}

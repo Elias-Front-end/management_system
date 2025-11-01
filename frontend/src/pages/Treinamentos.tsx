@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Edit, Trash2, BookOpen } from 'lucide-react';
 import { treinamentosAPI } from '../services/api';
 import { useNotificationStore } from '../store/notificationStore';
@@ -16,11 +16,7 @@ export const Treinamentos: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingTreinamento, setEditingTreinamento] = useState<Treinamento | null>(null);
 
-  useEffect(() => {
-    loadTreinamentos();
-  }, [searchTerm]);
-
-  const loadTreinamentos = async () => {
+  const loadTreinamentos = useCallback(async () => {
     try {
       setIsLoading(true);
       const data = await treinamentosAPI.list(searchTerm || undefined);
@@ -32,7 +28,11 @@ export const Treinamentos: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [searchTerm, notifyError]);
+
+  useEffect(() => {
+    loadTreinamentos();
+  }, [loadTreinamentos]);
 
   const handleOpenModal = (treinamento?: Treinamento) => {
     setEditingTreinamento(treinamento || null);
@@ -87,7 +87,7 @@ export const Treinamentos: React.FC = () => {
           </h1>
           <p className="text-gray-600 mt-1">Gerencie os treinamentos disponíveis</p>
         </div>
-        
+
         <button
           onClick={() => handleOpenModal()}
           className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
@@ -123,7 +123,7 @@ export const Treinamentos: React.FC = () => {
                 {searchTerm ? 'Nenhum treinamento encontrado' : 'Nenhum treinamento cadastrado'}
               </h3>
               <p className="text-gray-600 mb-4">
-                {searchTerm 
+                {searchTerm
                   ? 'Tente ajustar os termos de busca'
                   : 'Comece criando seu primeiro treinamento'
                 }
@@ -143,6 +143,9 @@ export const Treinamentos: React.FC = () => {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ações
+                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Nome
                     </th>
@@ -150,27 +153,16 @@ export const Treinamentos: React.FC = () => {
                       Descrição
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Criado em
+                      Nível
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ações
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Criado em
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredTreinamentos.map((treinamento) => (
                     <tr key={treinamento.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium text-gray-900">{treinamento.nome}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-gray-600 max-w-xs truncate">
-                          {treinamento.descricao || '-'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                        {new Date(treinamento.created_at).toLocaleDateString('pt-BR')}
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end space-x-2">
                           <button
@@ -189,6 +181,29 @@ export const Treinamentos: React.FC = () => {
                           </button>
                         </div>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="font-medium text-gray-900">{treinamento.nome}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-gray-600 max-w-xs truncate">
+                          {treinamento.descricao || '-'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          treinamento.nivel === 'iniciante' 
+                            ? 'bg-green-100 text-green-800'
+                            : treinamento.nivel === 'intermediario'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {treinamento.nivel === 'iniciante' ? 'Iniciante' : 
+                           treinamento.nivel === 'intermediario' ? 'Intermediário' : 'Avançado'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                        {new Date(treinamento.created_at).toLocaleDateString('pt-BR')}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -205,7 +220,7 @@ export const Treinamentos: React.FC = () => {
         onSuccess={handleSuccess}
         treinamento={editingTreinamento}
       />
-      
+
       <ConfirmComponent />
     </div>
   );

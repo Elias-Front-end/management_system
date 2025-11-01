@@ -11,9 +11,21 @@ def upload_to(instance, filename):
     return os.path.join('recursos', filename)
 
 class Treinamento(models.Model):
+    NIVEL_CHOICES = [
+        ('iniciante', 'Iniciante'),
+        ('intermediario', 'Intermediário'),
+        ('avancado', 'Avançado'),
+    ]
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     nome = models.CharField(max_length=200, verbose_name="Nome")
     descricao = models.TextField(blank=True, null=True, verbose_name="Descrição")
+    nivel = models.CharField(
+        max_length=20, 
+        choices=NIVEL_CHOICES, 
+        default='iniciante',
+        verbose_name="Nível"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

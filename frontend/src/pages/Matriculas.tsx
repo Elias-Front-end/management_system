@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Edit, Trash2, GraduationCap, Calendar, AlertCircle } from 'lucide-react';
 import { matriculasAPI, alunosAPI, turmasAPI } from '../services/api';
 import { extractAndTranslateError } from '../utils/errorMessages';
@@ -29,11 +29,7 @@ export const Matriculas: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [searchTerm]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
       const [matriculasData, alunosData, turmasData] = await Promise.all([
@@ -51,7 +47,11 @@ export const Matriculas: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [notifyError]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleOpenModal = (matricula?: Matricula) => {
     if (matricula) {
@@ -83,7 +83,7 @@ export const Matriculas: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.aluno || !formData.turma) {
       setError('Todos os campos são obrigatórios');
       notifyWarning('Todos os campos são obrigatórios', 'Campos obrigatórios');
@@ -98,22 +98,17 @@ export const Matriculas: React.FC = () => {
         aluno: formData.aluno,
         turma: formData.turma,
       };
-      console.log('Dados a serem enviados para a API:', submitData);
 
       if (editingMatricula) {
-        console.log('Atualizando matrícula com ID:', editingMatricula.id);
         await matriculasAPI.update(editingMatricula.id, submitData);
-        console.log('Matrícula atualizada com sucesso!');
       } else {
-        console.log('Criando nova matrícula...');
         await matriculasAPI.create(submitData);
-        console.log('Matrícula criada com sucesso!');
       }
-      
+
       notifySuccess(editingMatricula ? 'Matrícula atualizada com sucesso' : 'Matrícula criada com sucesso');
       handleCloseModal();
       loadData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro na chamada da API:', error);
       const errorMessage = extractAndTranslateError(error, 'Erro ao salvar matrícula');
       setError(errorMessage);
@@ -191,7 +186,7 @@ export const Matriculas: React.FC = () => {
           </h1>
           <p className="text-gray-600 mt-1">Gerencie as matrículas dos alunos nas turmas</p>
         </div>
-        
+
         <button
           onClick={() => handleOpenModal()}
           className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
@@ -227,7 +222,7 @@ export const Matriculas: React.FC = () => {
                 {searchTerm ? 'Nenhuma matrícula encontrada' : 'Nenhuma matrícula cadastrada'}
               </h3>
               <p className="text-gray-600 mb-4">
-                {searchTerm 
+                {searchTerm
                   ? 'Tente ajustar os termos de busca'
                   : 'Comece criando sua primeira matrícula'
                 }
@@ -248,6 +243,9 @@ export const Matriculas: React.FC = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ações
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Aluno
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -265,14 +263,29 @@ export const Matriculas: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Matrícula
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ações
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredMatriculas.map((matricula) => (
                     <tr key={matricula.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-left">
+                        <div className="flex items-center justify-start space-x-2">
+                          <button
+                            onClick={() => handleOpenModal(matricula)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Editar"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(matricula)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Excluir"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-8 w-8">
@@ -312,24 +325,6 @@ export const Matriculas: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                         {formatDate(matricula.data_matricula)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className="flex items-center justify-end space-x-2">
-                          <button
-                            onClick={() => handleOpenModal(matricula)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Editar"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(matricula)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Excluir"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -366,8 +361,6 @@ export const Matriculas: React.FC = () => {
                     onChange={(e) => {
                       const value = e.target.value ? e.target.value : '';
                       setFormData({ ...formData, aluno: value });
-                      console.log('Aluno selecionado:', value);
-                      console.log('formData atualizado (aluno):', { ...formData, aluno: value });
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     required
@@ -392,8 +385,6 @@ export const Matriculas: React.FC = () => {
                     onChange={(e) => {
                       const value = e.target.value ? e.target.value : '';
                       setFormData({ ...formData, turma: value });
-                      console.log('Turma selecionada:', value);
-                      console.log('formData atualizado (turma):', { ...formData, turma: value });
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     required
@@ -430,7 +421,7 @@ export const Matriculas: React.FC = () => {
           </div>
         </div>
       )}
-      
+
       <ConfirmComponent />
     </div>
   );

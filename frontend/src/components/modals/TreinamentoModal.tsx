@@ -8,8 +8,6 @@ import { extractAndTranslateError } from '../../utils/errorMessages';
 interface TreinamentoFormData {
   nome: string;
   descricao: string;
-  categoria: string;
-  duracao_horas: number;
   nivel: 'iniciante' | 'intermediario' | 'avancado';
 }
 
@@ -29,12 +27,10 @@ export const TreinamentoModal: React.FC<TreinamentoModalProps> = ({
   const { notifySuccess, notifyError } = useNotificationStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState<TreinamentoFormData>({
     nome: '',
     descricao: '',
-    categoria: '',
-    duracao_horas: 0,
     nivel: 'iniciante'
   });
 
@@ -43,16 +39,12 @@ export const TreinamentoModal: React.FC<TreinamentoModalProps> = ({
       setFormData({
         nome: treinamento.nome,
         descricao: treinamento.descricao || '',
-        categoria: treinamento.categoria || '',
-        duracao_horas: treinamento.duracao_horas || 0,
         nivel: treinamento.nivel || 'iniciante'
       });
     } else {
       setFormData({
         nome: '',
         descricao: '',
-        categoria: '',
-        duracao_horas: 0,
         nivel: 'iniciante'
       });
     }
@@ -68,8 +60,6 @@ export const TreinamentoModal: React.FC<TreinamentoModalProps> = ({
       const submitData = {
         nome: formData.nome,
         descricao: formData.descricao,
-        categoria: formData.categoria,
-        duracao_horas: formData.duracao_horas,
         nivel: formData.nivel
       };
 
@@ -83,7 +73,7 @@ export const TreinamentoModal: React.FC<TreinamentoModalProps> = ({
 
       onSuccess();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao salvar treinamento:', error);
       const errorMessage = extractAndTranslateError(error);
       setError(errorMessage);
@@ -151,45 +141,13 @@ export const TreinamentoModal: React.FC<TreinamentoModalProps> = ({
             </div>
 
             <div>
-              <label htmlFor="categoria" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Categoria
-              </label>
-              <input
-                id="categoria"
-                type="text"
-                value={formData.categoria}
-                onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white"
-                placeholder="Digite a categoria do treinamento"
-                disabled={isSubmitting}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="duracao_horas" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Duração (horas)
-              </label>
-              <input
-                id="duracao_horas"
-                type="number"
-                min="0"
-                step="0.5"
-                value={formData.duracao_horas}
-                onChange={(e) => setFormData({ ...formData, duracao_horas: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white"
-                placeholder="0"
-                disabled={isSubmitting}
-              />
-            </div>
-
-            <div>
               <label htmlFor="nivel" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Nível
               </label>
               <select
                 id="nivel"
                 value={formData.nivel}
-                onChange={(e) => setFormData({ ...formData, nivel: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, nivel: e.target.value as 'iniciante' | 'intermediario' | 'avancado' })}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white"
                 disabled={isSubmitting}
               >

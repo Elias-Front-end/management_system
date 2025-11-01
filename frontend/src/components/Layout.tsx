@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Menu, X, Moon, Sun } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { FloatingMenu } from './FloatingMenu';
-import { useTheme } from '../contexts/ThemeContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -10,7 +9,6 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Novo estado para a sidebar do desktop
-  const { theme, toggleTheme } = useTheme();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -51,16 +49,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </h1>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
-              {/* Botão de alternância de tema */}
-              <button
-                onClick={toggleTheme}
-                className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 text-white hover:opacity-90 shadow-md transition-colors"
-                aria-label="Alternar tema"
-              >
-                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-              </button>
               {/* Indicador Sistema Online */}
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -75,42 +65,23 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <div className="flex-1 flex relative z-10 overflow-hidden">
         {/* Mobile Overlay */}
         {isMobileMenuOpen && (
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 dark:bg-black/70 z-30"
             onClick={toggleMobileMenu}
-          />
+          >
+          </div>
         )}
 
         {/* Sidebar */}
-        <div className={`sidebar-responsive ${isSidebarOpen ? '' : 'sidebar-closed-desktop'} ${isMobileMenuOpen ? '' : 'sidebar-hidden-mobile'}`}>
-          <FloatingMenu onNavigate={() => setIsMobileMenuOpen(false)} />
-        </div>
+        <FloatingMenu isOpen={isSidebarOpen} onNavigate={() => setIsMobileMenuOpen(false)} />
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-hidden">
-          <div className="h-full overflow-y-auto p-2 sm:p-4 md:p-6">
+        {/* Content Area */}
+        <main className={`flex-1 overflow-y-auto transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+          <div className="p-4 sm:p-6 lg:p-8">
             {children}
           </div>
         </main>
       </div>
-
-      {/* Footer */}
-      <footer className="relative z-10 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-t border-gray-200/50 dark:border-gray-700/50 transition-colors duration-300 flex-shrink-0">
-        <div className="w-full max-w-none mx-auto px-2 sm:px-4 lg:px-8 py-3 sm:py-4">
-          <div className="flex flex-col sm:flex-row justify-between items-center text-xs sm:text-sm text-gray-600 dark:text-gray-300">
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <p>&copy; 2024 StrataSec. Todos os direitos reservados.</p>
-            </div>
-            <div className="flex items-center space-x-2 sm:space-x-4 mt-2 sm:mt-0">
-              <a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Suporte</a>
-              <a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Documentação</a>
-              <a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Contato</a>
-            </div>
-          </div>
-        </div>
-      </footer>
-
-
     </div>
   );
 };

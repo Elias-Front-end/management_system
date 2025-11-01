@@ -23,7 +23,7 @@ export const TurmaDetalhes: React.FC = () => {
   const { turmaId } = useParams<{ turmaId: string }>();
   const navigate = useNavigate();
   const { aluno: alunoFromStore } = useAuthStore();
-  
+
   // Estados
   const [turma, setTurma] = useState<Turma | null>(null);
   const [recursos, setRecursos] = useState<RecursoAluno[]>([]);
@@ -33,7 +33,7 @@ export const TurmaDetalhes: React.FC = () => {
     const fetchTurmaDetalhes = async () => {
       try {
         setLoading(true);
-        
+
         if (!alunoFromStore?.id || !turmaId) {
           throw new Error('Dados do aluno ou turma não encontrados');
         }
@@ -65,7 +65,7 @@ export const TurmaDetalhes: React.FC = () => {
             created_at: recurso.created_at,
             treinamento_nome: turmaEncontrada.treinamento_nome
           }));
-        
+
         setRecursos(recursosConvertidos);
       } catch (err) {
         console.error('Erro ao carregar detalhes da turma:', err);
@@ -156,11 +156,11 @@ export const TurmaDetalhes: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <StudentHeader 
+      <StudentHeader
         title={turma.nome}
         subtitle={`Treinamento: ${turma.treinamento_nome}`}
       />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Botão Voltar */}
         <div className="mb-6">
@@ -185,7 +185,7 @@ export const TurmaDetalhes: React.FC = () => {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               <Calendar className="w-5 h-5 text-green-600" />
               <div>
@@ -195,7 +195,7 @@ export const TurmaDetalhes: React.FC = () => {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               <Users className="w-5 h-5 text-purple-600" />
               <div>
@@ -259,15 +259,15 @@ export const TurmaDetalhes: React.FC = () => {
 
                   {/* Informações do Recurso */}
                   <div>
-                    <h3 
+                    <h3
                       id={`resource-${recurso.id}-title`}
                       className="font-semibold text-gray-900 dark:text-gray-100 text-lg mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
                     >
                       {recurso.nome_recurso}
                     </h3>
-                    
+
                     {recurso.descricao_recurso && (
-                      <p 
+                      <p
                         id={`resource-${recurso.id}-description`}
                         className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4"
                       >
@@ -279,7 +279,7 @@ export const TurmaDetalhes: React.FC = () => {
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                         {getResourceTypeLabel(recurso.tipo_recurso)}
                       </span>
-                      
+
                       <div className="flex items-center space-x-1 text-blue-600 dark:text-blue-400">
                         <ExternalLink className="w-4 h-4" />
                         <span className="text-sm font-medium">Abrir</span>

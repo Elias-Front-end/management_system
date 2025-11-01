@@ -1,6 +1,5 @@
 import React from 'react';
 import { AdminHeader } from './AdminHeader';
-import { useTheme } from '../contexts/ThemeContext';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -9,7 +8,6 @@ interface AdminLayoutProps {
 }
 
 export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title, subtitle }) => {
-  const { theme: _theme } = useTheme();
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden transition-colors duration-300">

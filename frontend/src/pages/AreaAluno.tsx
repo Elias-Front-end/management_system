@@ -9,7 +9,7 @@ import StudentHeader from '../components/StudentHeader';
 export const AreaAluno: React.FC = () => {
   const { user, aluno: alunoFromStore } = useAuthStore();
   const navigate = useNavigate();
-  
+
   // Estados
   const [turmas, setTurmas] = useState<Turma[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +18,7 @@ export const AreaAluno: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        
+
         if (!alunoFromStore?.id) {
           throw new Error('Dados do aluno não encontrados');
         }
@@ -54,7 +54,7 @@ export const AreaAluno: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <StudentHeader />
-      
+
       <div className="container mx-auto px-4 py-8">
         {/* Seção de Boas-vindas */}
         <div className="mb-8">
@@ -101,13 +101,13 @@ export const AreaAluno: React.FC = () => {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
-                      <h3 
+                      <h3
                         id={`turma-${turma.id}-title`}
                         className="text-lg font-semibold text-white mb-2 group-hover:text-purple-300 transition-colors"
                       >
                         {turma.treinamento_nome}
                       </h3>
-                      <div 
+                      <div
                         id={`turma-${turma.id}-dates`}
                         className="flex items-center gap-2 text-sm text-slate-400 mb-2"
                       >
@@ -124,7 +124,7 @@ export const AreaAluno: React.FC = () => {
                     </div>
                     <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-purple-400 transition-colors" />
                   </div>
-                  
+
                   <div className="pt-4 border-t border-slate-700">
                     <p className="text-sm text-slate-300">
                       Clique para ver recursos e materiais de estudo

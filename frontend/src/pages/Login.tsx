@@ -10,7 +10,7 @@ export const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<'aluno' | 'admin' | ''>('');
   const navigate = useNavigate();
-  
+
   const { login, isAuthenticated, isLoading, error, clearError } = useAuthStore();
   const { notifySuccess, notifyError, notifyWarning } = useNotificationStore();
 
@@ -27,7 +27,7 @@ export const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!username.trim() || !password.trim()) {
       notifyWarning('Informe usuário e senha', 'Campos obrigatórios');
       return;
@@ -39,16 +39,20 @@ export const Login: React.FC = () => {
     }
 
     try {
-      await login({ username: username.trim(), password });
+      await login({ 
+        username: username.trim(), 
+        password,
+        profile_type: selectedProfile as 'admin' | 'aluno'
+      });
       notifySuccess('Login realizado com sucesso');
-      
+
       // Redirecionamento baseado na seleção do usuário
       if (selectedProfile === 'admin') {
         navigate('/dashboard'); // Admin vai para o dashboard
       } else {
         navigate('/area-aluno'); // Aluno vai para a área do aluno
       }
-    } catch (error) {
+    } catch {
       // Store sets the error; also show a toast for visibility
       notifyError('Erro ao fazer login');
     }

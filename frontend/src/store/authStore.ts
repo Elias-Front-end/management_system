@@ -1,12 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User, LoginRequest } from '../types';
+import type { User, LoginRequest, Aluno, LoginResponse } from '../types';
 import { authAPI } from '../services/api';
 
 interface AuthState {
   user: User | null;
   isAdmin: boolean;
-  aluno: any | null; // Dados do perfil do aluno
+  aluno: Aluno | null; // Dados do perfil do aluno
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -40,14 +40,15 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
             error: null,
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : 'Erro ao fazer login';
           set({
             user: null,
             isAdmin: false,
             aluno: null,
             isAuthenticated: false,
             isLoading: false,
-            error: error.message || 'Erro ao fazer login',
+            error: errorMessage,
           });
           throw error;
         }
@@ -94,16 +95,16 @@ export const useAuthStore = create<AuthState>()(
         if (get().isAuthenticated) {
           set({ isLoading: true });
           try {
-            const response = await authAPI.me();
+            const response = (await authAPI.me()) as unknown as LoginResponse;
             set({ 
-              user: response,
-              isAdmin: (response as any).is_admin,
-              aluno: (response as any).aluno,
+              user: response.user,
+              isAdmin: response.is_admin,
+              aluno: response.aluno,
               isAuthenticated: true, 
               isLoading: false,
               error: null 
             });
-          } catch (error) {
+          } catch {
             set({ 
               user: null, 
               isAdmin: false,

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useNotificationStore } from '../store/notificationStore';
@@ -10,29 +10,22 @@ interface UseInactivityTimeoutProps {
   onWarning?: () => void;
 }
 
-export const useInactivityTimeout = ({
-  timeout,
-  warningTime,
-  onTimeout,
-  onWarning,
-}: UseInactivityTimeoutProps) => {
+export const useInactivityTimeout = ({ timeout, warningTime, onTimeout, onWarning }: UseInactivityTimeoutProps) => {
   const navigate = useNavigate();
-  const { logout, isAuthenticated } = useAuthStore();
-  const { notifyWarning, notifyError } = useNotificationStore();
+  const { isAuthenticated, logout } = useAuthStore();
+  const { notifyError, notifyWarning } = useNotificationStore();
   
   const timeoutRef = useRef<number | null>(null);
   const warningTimeoutRef = useRef<number | null>(null);
   const isWarningShownRef = useRef(false);
 
   // Eventos que resetam o timer
-  const events = [
-    'mousedown',
+  const events = useMemo(() => [
     'mousemove',
-    'keypress',
-    'scroll',
+    'keydown',
     'touchstart',
-    'click',
-  ];
+    'click'
+  ], []);
 
   // Função para limpar todos os timeouts
   const clearTimeouts = useCallback(() => {
@@ -108,18 +101,18 @@ export const useInactivityTimeout = ({
       resetTimer();
     };
 
-    events.forEach((event) => {
+    events.forEach((event: string) => {
       document.addEventListener(event, handleActivity, true);
     });
 
     // Cleanup
     return () => {
       clearTimeouts();
-      events.forEach((event) => {
+      events.forEach((event: string) => {
         document.removeEventListener(event, handleActivity, true);
       });
     };
-  }, [isAuthenticated, resetTimer, clearTimeouts]);
+  }, [isAuthenticated, resetTimer, clearTimeouts, events]);
 
   // Cleanup ao desmontar
   useEffect(() => {
