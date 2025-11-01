@@ -533,7 +533,7 @@ class AuthViewSet(viewsets.ViewSet):
                 status=status.HTTP_401_UNAUTHORIZED
             )
     
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], permission_classes=[permissions.AllowAny])
     def logout(self, request):
         logout(request)
         return Response({'message': 'Logout realizado com sucesso'})

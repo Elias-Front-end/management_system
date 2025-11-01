@@ -8,6 +8,23 @@ import type {
 // Allows switching to explicit URL via environment variable when needed
 const API_BASE_URL = (import.meta as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL ?? '/api';
 
+// Function to get CSRF token from cookie
+function getCSRFToken(): string | null {
+  const name = 'csrftoken';
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
 // Configure axios defaults
 axios.defaults.withCredentials = true;
 axios.defaults.xsrfCookieName = 'csrftoken';
@@ -17,6 +34,23 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
 });
+
+// Add request interceptor to include CSRF token
+api.interceptors.request.use(
+  (config) => {
+    // For POST, PUT, PATCH, DELETE requests, add CSRF token
+    if (['post', 'put', 'patch', 'delete'].includes(config.method?.toLowerCase() || '')) {
+      const csrfToken = getCSRFToken();
+      if (csrfToken) {
+        config.headers['X-CSRFToken'] = csrfToken;
+      }
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // Helper to normalize DRF paginated responses to arrays
 function unwrapArray<T>(data: unknown): T[] {

@@ -10,8 +10,10 @@ Sistema web completo para gestão de treinamentos e turmas, permitindo que admin
 
 ## 📋 Índice
 
+- [Atualizações Recentes](#-atualizações-recentes)
 - [Visão Geral](#-visão-geral)
 - [Tecnologias](#-tecnologias)
+- [🚀 Início Rápido (Desenvolvimento Local)](#-início-rápido-desenvolvimento-local)
 - [Requisitos do Sistema](#-requisitos-do-sistema)
 - [Configuração do Ambiente](#-configuração-do-ambiente)
 - [Estrutura do Projeto](#-estrutura-do-projeto)
@@ -52,6 +54,63 @@ O StrataSec é uma plataforma educacional que oferece:
 - **Zustand 5.0.8** - Gerenciamento de estado
 - **Axios 1.12.2** - Cliente HTTP
 - **Lucide React** - Ícones
+
+## 🚀 Início Rápido (Desenvolvimento Local)
+
+**Para desenvolvedores que querem testar rapidamente o sistema:**
+
+### Pré-requisitos
+- Python 3.10+ instalado
+- Node.js 18+ instalado
+
+### 1. Backend (Django + SQLite)
+```bash
+# Clonar e navegar
+git clone <repository-url>
+cd management_system/backend
+
+# Criar ambiente virtual
+python -m venv .venv
+
+# Ativar ambiente virtual (Windows PowerShell)
+.venv\Scripts\Activate.ps1
+# ou Windows CMD: .venv\Scripts\activate.bat
+# ou Linux/Mac: source .venv/bin/activate
+
+# Instalar dependências essenciais
+pip install Django djangorestframework djangorestframework-simplejwt django-cors-headers Pillow python-decouple
+
+# Configurar banco de dados
+python manage.py makemigrations
+python manage.py migrate
+
+# Criar admin automaticamente
+python set_admin_password.py
+
+# Iniciar servidor
+python manage.py runserver 8000
+```
+
+### 2. Frontend (React)
+```bash
+# Em outro terminal
+cd frontend
+
+# Instalar dependências
+npm install
+
+# Iniciar servidor
+npm run dev
+```
+
+### 3. Acessar Sistema
+- **Frontend**: http://localhost:5174
+- **Login**: `admin` / `admin123` (selecionar "Administrador")
+- **Django Admin**: http://localhost:8000/admin/
+
+**⚠️ Importante**: Sempre selecione o tipo de perfil (Administrador/Aluno) antes de fazer login!
+
+---
 
 ## 💻 Requisitos do Sistema
 
@@ -595,6 +654,181 @@ npx playwright test tests/login.spec.ts
 npx playwright test tests/dashboard.spec.ts
 ```
 
+### 🐳 Testes com Docker
+
+#### Pré-requisitos Docker
+```bash
+# Verificar se Docker está instalado e funcionando
+docker --version
+docker-compose --version
+
+# Verificar se Docker está rodando
+docker ps
+```
+
+#### Teste Completo do Deploy Docker
+
+```bash
+# 1. Parar qualquer instância local rodando
+# Se estiver rodando localmente, pare os serviços:
+# Ctrl+C no terminal do backend
+# Ctrl+C no terminal do frontend
+
+# 2. Limpar containers anteriores (se existirem)
+docker-compose down --volumes --remove-orphans
+
+# 3. Construir e iniciar todos os serviços
+docker-compose up --build -d
+
+# 4. Verificar status dos containers
+docker-compose ps
+
+# Saída esperada:
+# NAME                         IMAGE                       COMMAND                  SERVICE    CREATED          STATUS          PORTS
+# management_system_backend    management_system-backend   "sh -c 'python manag…"   backend    X seconds ago    Up X seconds    0.0.0.0:8000->8000/tcp
+# management_system_db         postgres:15-alpine          "docker-entrypoint.s…"   db         X seconds ago    Up X seconds    0.0.0.0:5432->5432/tcp
+# management_system_frontend   node:18-alpine              "docker-entrypoint.s…"   frontend   X seconds ago    Up X seconds    0.0.0.0:5174->5174/tcp
+
+# 5. Verificar logs dos containers
+docker-compose logs backend
+docker-compose logs frontend
+docker-compose logs db
+
+# 6. Testar conectividade dos serviços
+```
+
+#### Testes de Funcionalidade Docker
+
+```bash
+# Testar Backend API
+curl -X GET http://localhost:8000/api/
+# Resposta esperada: {"detail":"As credenciais de autenticação não foram fornecidas."}
+
+# Testar Django Admin
+curl -X GET http://localhost:8000/admin/
+# Resposta esperada: HTML da página de login do admin
+
+# Testar Frontend React
+curl -X GET http://localhost:5174/
+# Resposta esperada: HTML da aplicação React
+
+# Testar banco PostgreSQL
+docker-compose exec db psql -U postgres -d management_system -c "\dt"
+# Resposta esperada: Lista das tabelas Django
+```
+
+#### Testes de Performance Docker
+
+```bash
+# Verificar uso de recursos
+docker stats
+
+# Verificar logs em tempo real
+docker-compose logs -f backend
+docker-compose logs -f frontend
+
+# Testar múltiplas requisições
+for i in {1..10}; do
+  curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8000/admin/
+done
+# Resposta esperada: 10 linhas com "200"
+```
+
+#### Comandos de Manutenção Docker
+
+```bash
+# Parar todos os serviços
+docker-compose down
+
+# Parar e remover volumes (CUIDADO: apaga dados do banco)
+docker-compose down --volumes
+
+# Reconstruir apenas um serviço
+docker-compose up --build backend
+
+# Executar comandos dentro dos containers
+docker-compose exec backend python manage.py migrate
+docker-compose exec backend python manage.py createsuperuser
+docker-compose exec backend python manage.py collectstatic --noinput
+
+# Acessar shell dos containers
+docker-compose exec backend bash
+docker-compose exec db psql -U postgres -d management_system
+docker-compose exec frontend sh
+
+# Ver logs específicos
+docker-compose logs --tail=50 backend
+docker-compose logs --follow frontend
+```
+
+#### Troubleshooting Docker
+
+```bash
+# Problema: Container não inicia
+# Solução: Verificar logs
+docker-compose logs [service_name]
+
+# Problema: Porta já em uso
+# Solução: Parar processo na porta ou alterar porta no docker-compose.yml
+netstat -ano | findstr :8000  # Windows
+lsof -i :8000                 # Linux/Mac
+
+# Problema: Erro de build
+# Solução: Limpar cache e reconstruir
+docker system prune -a
+docker-compose build --no-cache
+
+# Problema: Banco de dados não conecta
+# Solução: Verificar se PostgreSQL está rodando
+docker-compose exec db pg_isready -U postgres
+
+# Problema: Frontend não carrega
+# Solução: Verificar se Vite está servindo corretamente
+docker-compose exec frontend npm run dev
+```
+
+#### Validação Completa do Sistema Docker
+
+```bash
+# Script de validação completa
+#!/bin/bash
+
+echo "🐳 Iniciando validação completa do sistema Docker..."
+
+# 1. Verificar se containers estão rodando
+echo "📋 Verificando status dos containers..."
+docker-compose ps
+
+# 2. Testar backend
+echo "🔧 Testando backend..."
+BACKEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/admin/)
+if [ "$BACKEND_STATUS" = "200" ]; then
+    echo "✅ Backend funcionando (Status: $BACKEND_STATUS)"
+else
+    echo "❌ Backend com problema (Status: $BACKEND_STATUS)"
+fi
+
+# 3. Testar frontend
+echo "🎨 Testando frontend..."
+FRONTEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5174/)
+if [ "$FRONTEND_STATUS" = "200" ]; then
+    echo "✅ Frontend funcionando (Status: $FRONTEND_STATUS)"
+else
+    echo "❌ Frontend com problema (Status: $FRONTEND_STATUS)"
+fi
+
+# 4. Testar banco de dados
+echo "🗄️ Testando banco de dados..."
+DB_STATUS=$(docker-compose exec -T db pg_isready -U postgres)
+if [[ $DB_STATUS == *"accepting connections"* ]]; then
+    echo "✅ Banco de dados funcionando"
+else
+    echo "❌ Banco de dados com problema"
+fi
+
+echo "🎉 Validação completa finalizada!"
+```
+
 #### Exemplo de Teste E2E
 
 ```typescript
@@ -795,7 +1029,31 @@ python manage.py migrate core 0001
 
 #### Problemas Comuns - Backend
 
-##### 1. Erro de Migração
+##### 1. ⚠️ Erro de CSRF Token (RESOLVIDO)
+```bash
+# Problema: "CSRF Failed: CSRF token missing" ou 403 Forbidden
+# Sintomas:
+# - Login/logout não funcionam
+# - Requisições POST/PUT/PATCH/DELETE falham
+# - Console mostra erros de CSRF
+
+# ✅ SOLUÇÃO IMPLEMENTADA:
+# 1. Configuração correta no backend (settings.py):
+CSRF_COOKIE_HTTPONLY = False  # CRÍTICO: deve ser False para acesso JS
+CSRF_COOKIE_NAME = 'csrftoken'
+CSRF_TRUSTED_ORIGINS = ['http://localhost:5174', 'http://127.0.0.1:5174']
+
+# 2. Interceptor automático no frontend (api.ts):
+# - Obtém token automaticamente do cookie
+# - Inclui X-CSRFToken em todas as requisições POST/PUT/PATCH/DELETE
+
+# 3. Verificação:
+# - Endpoint /api/csrf/ disponível
+# - Cookie csrftoken visível no browser
+# - Header X-CSRFToken nas requisições
+```
+
+##### 2. Erro de Migração
 ```bash
 # Problema: django.db.utils.OperationalError
 # Solução:
@@ -806,7 +1064,7 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
-##### 2. Erro de Dependências
+##### 3. Erro de Dependências
 ```bash
 # Problema: ModuleNotFoundError
 # Solução:
@@ -816,14 +1074,14 @@ pip install --upgrade pip
 pip install -r requirements.txt --force-reinstall
 ```
 
-##### 3. Erro de CORS
+##### 4. Erro de CORS
 ```bash
 # Problema: CORS policy error
 # Solução: Verificar CORS_ALLOWED_ORIGINS em settings.py
 # Adicionar URL do frontend se necessário
 ```
 
-##### 4. Erro de Arquivo de Mídia
+##### 5. Erro de Arquivo de Mídia
 ```bash
 # Problema: FileNotFoundError para uploads
 # Solução:
@@ -906,6 +1164,22 @@ python manage.py createsuperuser
 ```
 
 ## 🚀 Deploy em Produção
+
+O sistema oferece **três opções de deploy**:
+
+1. **🌐 PaaS (Render/Railway)** - Mais fácil, ideal para iniciantes
+2. **🐳 Docker** - Containerizado, ideal para desenvolvimento e produção
+3. **☁️ Servidor Tradicional** - VPS/Cloud, máximo controle
+
+> 📖 **Documentação completa:** Consulte o arquivo `DEPLOY_GUIDE.md` para instruções detalhadas de cada método.
+
+### Resumo das Opções
+
+| Método | Dificuldade | Custo | Escalabilidade | Controle |
+|--------|-------------|-------|----------------|----------|
+| **PaaS** | ⭐ Fácil | 💰 Baixo | ⭐⭐⭐ Alta | ⭐⭐ Médio |
+| **Docker** | ⭐⭐ Médio | 💰💰 Médio | ⭐⭐⭐ Alta | ⭐⭐⭐ Alto |
+| **VPS** | ⭐⭐⭐ Difícil | 💰💰💰 Alto | ⭐⭐ Média | ⭐⭐⭐⭐ Máximo |
 
 ### Pré-requisitos para Deploy
 

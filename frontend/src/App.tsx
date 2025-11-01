@@ -72,10 +72,18 @@ function App() {
 
   useEffect(() => {
     // Ensure CSRF cookie is set for subsequent POST/PUT/DELETE requests
-    api.get('/csrf/').catch(() => {
-      // Ignore errors; CSRF cookie will be set when available
-    });
-    checkAuth();
+    const initializeCSRF = async () => {
+      try {
+        await api.get('/csrf/');
+        console.log('CSRF token initialized');
+      } catch (error) {
+        console.warn('Failed to initialize CSRF token:', error);
+      }
+      // Check authentication after CSRF is set
+      checkAuth();
+    };
+    
+    initializeCSRF();
   }, [checkAuth]);
 
   return (

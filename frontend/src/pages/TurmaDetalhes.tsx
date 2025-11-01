@@ -175,7 +175,7 @@ export const TurmaDetalhes: React.FC = () => {
 
         {/* Informações da Turma */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="flex items-center space-x-3">
               <Calendar className="w-5 h-5 text-blue-600" />
               <div>
@@ -205,6 +205,25 @@ export const TurmaDetalhes: React.FC = () => {
                 </p>
               </div>
             </div>
+
+            {/* Link de Acesso da Turma */}
+            {turma.link_acesso && (
+              <div className="flex items-center space-x-3">
+                <ExternalLink className="w-5 h-5 text-orange-600" />
+                <div className="flex-1">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Link de Acesso</p>
+                  <a
+                    href={turma.link_acesso}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center space-x-1 text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 font-medium text-sm transition-colors"
+                  >
+                    <span>Acessar</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
