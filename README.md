@@ -368,7 +368,7 @@ Execute o script de deploy automático:
 
 ```bash
 # Baixar e executar script
-curl -O https://raw.githubusercontent.com/seu-usuario/management_system/main/deploy.sh
+curl -O https://raw.githubusercontent.com/Elias-Front-end/management_system/main/deploy.sh
 chmod +x deploy.sh
 sudo ./deploy.sh
 ```
@@ -381,6 +381,31 @@ O script automaticamente:
 - ✅ Configura Nginx e Gunicorn
 - ✅ Executa migrações e coleta arquivos estáticos
 - ✅ Configura SSL com Let's Encrypt (opcional)
+
+### 🔧 Correção de Problemas do Sistema
+
+Se encontrar erros relacionados ao sistema de pacotes (como `dpkg was interrupted`), use o script de correção:
+
+```bash
+# Baixar script de correção
+curl -O https://raw.githubusercontent.com/Elias-Front-end/management_system/main/fix-system.sh
+chmod +x fix-system.sh
+
+# Executar correção
+sudo ./fix-system.sh
+
+# Depois executar o deploy normalmente
+sudo ./deploy.sh install
+```
+
+**O script de correção resolve:**
+- ❌ `dpkg was interrupted` - Pacotes interrompidos
+- ❌ Dependências quebradas
+- ❌ Repositórios duplicados
+- ❌ Cache de pacotes corrompido
+- ❌ Pacotes órfãos
+
+**Nota:** O `deploy.sh` já inclui correção automática, mas o `fix-system.sh` pode ser usado separadamente se necessário.
 
 ### 🔄 Atualizações
 
