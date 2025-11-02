@@ -1,429 +1,474 @@
-# 🎓 Sistema de Gestão de Sala de Aula
+# 🎓 Sistema de Gestão de Treinamentos
 
-## 📋 Visão Geral
+Sistema completo para gestão de treinamentos, turmas e recursos educacionais, desenvolvido com Django REST Framework (backend) e React + TypeScript (frontend).
 
-Sistema educacional completo desenvolvido com **Django REST Framework** (backend) e **React + TypeScript** (frontend) para gerenciamento de treinamentos, turmas, recursos educacionais e alunos.
+## 📋 Índice
 
-### 🏗️ Arquitetura do Sistema
+- [Pré-requisitos](#-pré-requisitos)
+- [Instalação e Configuração](#-instalação-e-configuração)
+- [Executando o Sistema](#-executando-o-sistema)
+- [Criando Usuários e Dados](#-criando-usuários-e-dados)
+- [Estrutura do Projeto](#-estrutura-do-projeto)
+- [Funcionalidades](#-funcionalidades)
+- [Troubleshooting](#-troubleshooting)
 
+## 🛠️ Pré-requisitos
+
+### Software Necessário
+
+1. **Python 3.10 ou superior**
+   - Download: https://www.python.org/downloads/
+   - ✅ Marque "Add Python to PATH" durante a instalação
+
+2. **Node.js 18 ou superior**
+   - Download: https://nodejs.org/
+   - Inclui npm automaticamente
+
+3. **Git**
+   - Download: https://git-scm.com/downloads
+
+4. **PowerShell** (já incluído no Windows)
+
+### Verificando Instalações
+
+Abra o PowerShell e execute os comandos para verificar:
+
+```powershell
+# Verificar Python
+python --version
+# Deve retornar: Python 3.10.x ou superior
+
+# Verificar Node.js
+node --version
+# Deve retornar: v18.x.x ou superior
+
+# Verificar npm
+npm --version
+# Deve retornar: 9.x.x ou superior
+
+# Verificar Git
+git --version
+# Deve retornar: git version 2.x.x
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │    Backend      │    │   Banco de      │
-│   React + TS    │◄──►│  Django + DRF   │◄──►│   Dados         │
-│   (Port 3000)   │    │   (Port 8000)   │    │ SQLite/PostgreSQL│
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
 
-### 🚀 Tecnologias Utilizadas
+## 🚀 Instalação e Configuração
 
-**Backend:**
-- Python 3.10+
-- Django 4.2.16
-- Django REST Framework 3.14.0
-- JWT Authentication (djangorestframework-simplejwt)
-- SQLite (desenvolvimento) / PostgreSQL (produção)
+### 1. Clonando o Repositório
 
-**Frontend:**
-- React 19.1.1
-- TypeScript 5.9.3
-- Vite 6.0.7
-- Tailwind CSS 3.4.17
-- Zustand (gerenciamento de estado)
-- Axios (requisições HTTP)
-
-### 📚 Funcionalidades Principais
-
-- **👨‍💼 Administração**: Gerenciamento completo de treinamentos, turmas e recursos
-- **👨‍🎓 Área do Aluno**: Acesso controlado aos conteúdos baseado em regras de negócio
-- **🔐 Autenticação JWT**: Sistema seguro de login e controle de acesso
-- **📱 Interface Responsiva**: Design moderno e adaptável a diferentes dispositivos
-- **🎥 Player de Vídeo**: Reprodução de conteúdo multimídia integrada
-- **📄 Gestão de Arquivos**: Upload e download de recursos educacionais
-
----
-
-## 🖥️ Desenvolvimento Local (Sem Docker)
-
-### 📋 Pré-requisitos
-
-- **Python 3.10+** ([Download](https://www.python.org/downloads/))
-- **Node.js 18+** ([Download](https://nodejs.org/))
-- **Git** ([Download](https://git-scm.com/))
-
-### 🔧 Configuração Manual
-
-#### 1️⃣ Clone do Repositório
-
-```bash
-git clone https://github.com/seu-usuario/management_system.git
+```powershell
+# Clone o repositório
+git clone <URL_DO_REPOSITORIO>
 cd management_system
 ```
 
-#### 2️⃣ Configuração do Backend
+### 2. Configurando o Backend (Django)
 
-```bash
-# Navegar para o diretório do backend
+```powershell
+# Navegue para o diretório do backend
 cd backend
 
-# Criar ambiente virtual
-python -m venv venv
+# Crie um ambiente virtual Python
+python -m venv .venv
 
-# Ativar ambiente virtual
-# Windows:
-venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
+# Ative o ambiente virtual
+.\.venv\Scripts\Activate.ps1
 
-# Instalar dependências
+# Se houver erro de execução de scripts, execute:
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# Instale as dependências
 pip install -r requirements.txt
-
-# Configurar variáveis de ambiente
-cp .env.example .env
-
-# Executar migrações
-python manage.py migrate
-
-# Criar superusuário (opcional)
-python manage.py createsuperuser
-
-# Coletar arquivos estáticos
-python manage.py collectstatic --noinput
-
-# Iniciar servidor de desenvolvimento
-python manage.py runserver
 ```
 
-#### 3️⃣ Configuração do Frontend
+### 3. Configurando Variáveis de Ambiente do Backend
 
-```bash
-# Em um novo terminal, navegar para o frontend
+**⚠️ IMPORTANTE:** Se já existe um arquivo `.env` no diretório `backend`, você pode:
+- **Opção A:** Usar o arquivo existente (recomendado se já está funcionando)
+- **Opção B:** Fazer backup e recriar: `copy .env .env.backup` e depois `copy .env.example .env`
+
+Para criar um novo arquivo `.env`:
+
+```powershell
+# Navegue para o diretório backend (se não estiver lá)
+cd backend
+
+# Copie o arquivo de exemplo (apenas se não existir .env)
+if (!(Test-Path .env)) { copy .env.example .env }
+```
+
+Edite o arquivo `.env` com as seguintes configurações para desenvolvimento:
+
+```env
+# Configurações do Django
+SECRET_KEY=sua-chave-secreta-aqui-desenvolvimento
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+
+# Banco de Dados (SQLite para desenvolvimento)
+DATABASE_ENGINE=sqlite
+DATABASE_NAME=db.sqlite3
+
+# CORS (para permitir frontend)
+CORS_ALLOWED_ORIGINS=http://localhost:5174,http://127.0.0.1:5174
+CSRF_TRUSTED_ORIGINS=http://localhost:5174,http://127.0.0.1:5174
+CORS_ALLOW_CREDENTIALS=True
+
+# JWT
+JWT_ACCESS_TOKEN_LIFETIME=60
+JWT_REFRESH_TOKEN_LIFETIME=1440
+
+# Email (desenvolvimento)
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+
+# Arquivos
+MEDIA_ROOT=media
+STATIC_ROOT=staticfiles
+
+# Aplicação
+APP_NAME=Sistema de Gestão de Treinamentos
+APP_VERSION=1.0.0
+API_BASE_URL=http://localhost:8000/api
+FRONTEND_URL=http://localhost:5174
+```
+
+### 4. Configurando o Frontend (React)
+
+```powershell
+# Volte para o diretório raiz e vá para frontend
+cd ..
 cd frontend
 
-# Instalar dependências
+# Instale as dependências
 npm install
-
-# Configurar variáveis de ambiente
-cp .env.example .env
-
-# Iniciar servidor de desenvolvimento
-npm run dev
 ```
 
-#### 4️⃣ Configuração dos Arquivos .env
+Crie o arquivo `.env` no diretório `frontend`:
 
-**Backend (.env):**
-```env
-DEBUG=True
-SECRET_KEY=sua-chave-secreta-aqui
-DATABASE_URL=sqlite:///db.sqlite3
-ALLOWED_HOSTS=localhost,127.0.0.1
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+**⚠️ NOTA:** Se já existe um arquivo `.env` no diretório `frontend`, verifique se contém as configurações abaixo ou faça backup antes de substituir.
 
-# Configurações de Email (opcional)
-EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USE_TLS=True
-EMAIL_HOST_USER=seu-email@gmail.com
-EMAIL_HOST_PASSWORD=sua-senha-de-app
+```powershell
+# Navegue para o diretório frontend
+cd frontend
 
-# Configurações de Arquivos
-MEDIA_URL=/media/
-MEDIA_ROOT=media/
-STATIC_URL=/static/
-STATIC_ROOT=staticfiles/
-```
-
-**Frontend (.env):**
-```env
-VITE_API_URL=http://localhost:8000/api
-VITE_MEDIA_URL=http://localhost:8000
-```
-
-### 📖 Guia Completo de Desenvolvimento
-
-Para instruções detalhadas de configuração do ambiente de desenvolvimento, consulte:
-
-**📋 [Guia Manual de Setup IDE](SETUP_MANUAL_IDE.md)**
-- Configuração completa para Windows, macOS e Linux
-- Instalação passo-a-passo de todas as dependências
-- Configuração de IDEs (VS Code, PyCharm)
-- Scripts úteis para desenvolvimento
-- Solução de problemas comuns
-
-### 🚀 Executando o Sistema
-
-Após a configuração, acesse:
-
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000/api
-- **Admin Django**: http://localhost:8000/admin
-
----
-
-## 🐧 Deploy no Servidor Linux
-
-### 📋 Requisitos do Servidor
-
-**Sistema Operacional:**
-- Ubuntu 20.04+ / Debian 11+ / CentOS 8+
-- Acesso root ou sudo
-
-**Recursos Mínimos:**
-- 2 GB RAM
-- 20 GB de armazenamento
-- 1 vCPU
-
-**Software Necessário:**
-- Python 3.10+
-- Node.js 18+
-- PostgreSQL 12+
-- Nginx
-- Git
-
-### 🔧 Deploy Manual
-
-#### 1️⃣ Preparação do Servidor
-
-```bash
-# Atualizar sistema
-sudo apt update && sudo apt upgrade -y
-
-# Instalar dependências essenciais
-sudo apt install -y python3 python3-pip python3-venv nodejs npm postgresql postgresql-contrib nginx git curl
-
-# Configurar PostgreSQL
-sudo -u postgres createuser --interactive --pwprompt deploy
-sudo -u postgres createdb -O deploy management_system_db
-
-# Criar usuário para a aplicação
-sudo adduser deploy
-sudo usermod -aG sudo deploy
-```
-
-#### 2️⃣ Configuração da Aplicação
-
-```bash
-# Fazer login como usuário deploy
-sudo su - deploy
-
-# Clonar repositório
-git clone https://github.com/seu-usuario/management_system.git /opt/management_system
-cd /opt/management_system
-
-# Configurar backend
-cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-
-# Configurar variáveis de ambiente
-cp .env.example .env
-nano .env  # Editar com configurações de produção
-```
-
-**Configuração do .env de Produção:**
-```env
-DEBUG=False
-SECRET_KEY=sua-chave-secreta-super-segura
-DATABASE_URL=postgresql://deploy:senha@localhost:5432/management_system_db
-ALLOWED_HOSTS=seu-dominio.com,www.seu-dominio.com
-CORS_ALLOWED_ORIGINS=https://seu-dominio.com
-
-# Configurações de Email
-EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USE_TLS=True
-EMAIL_HOST_USER=seu-email@gmail.com
-EMAIL_HOST_PASSWORD=sua-senha-de-app
-```
-
-#### 3️⃣ Configuração do Frontend
-
-```bash
-# Configurar frontend
-cd ../frontend
-npm install
-npm run build
-
-# Mover arquivos buildados
-sudo mkdir -p /var/www/management_system
-sudo cp -r dist/* /var/www/management_system/
-```
-
-#### 4️⃣ Configuração do Nginx
-
-```bash
-# Criar configuração do Nginx
-sudo nano /etc/nginx/sites-available/management_system
-```
-
-**Configuração do Nginx:**
-```nginx
-server {
-    listen 80;
-    server_name seu-dominio.com www.seu-dominio.com;
-
-    # Frontend
-    location / {
-        root /var/www/management_system;
-        try_files $uri $uri/ /index.html;
-    }
-
-    # Backend API
-    location /api/ {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    # Admin Django
-    location /admin/ {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    # Arquivos estáticos
-    location /static/ {
-        alias /opt/management_system/backend/staticfiles/;
-    }
-
-    # Arquivos de mídia
-    location /media/ {
-        alias /opt/management_system/backend/media/;
-    }
+# Verifique se já existe .env
+if (Test-Path .env) { 
+    Write-Host "Arquivo .env já existe. Verifique as configurações abaixo." 
+} else { 
+    Write-Host "Criando novo arquivo .env" 
 }
 ```
 
-```bash
-# Ativar site
-sudo ln -s /etc/nginx/sites-available/management_system /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
+Configurações necessárias no `.env` do frontend:
+
+```env
+# Frontend Environment Variables - Development
+VITE_API_BASE_URL=http://localhost:8000/api
+VITE_APP_NAME=Sistema de Gestão de Treinamentos
+VITE_APP_VERSION=1.0.0
+VITE_DEBUG=true
 ```
 
-#### 5️⃣ Configuração do Gunicorn
+## 🏃‍♂️ Executando o Sistema
 
-```bash
-# Criar arquivo de serviço
-sudo nano /etc/systemd/system/management_system.service
-```
+### 1. Preparando o Banco de Dados
 
-**Configuração do Systemd:**
-```ini
-[Unit]
-Description=Management System Gunicorn daemon
-After=network.target
+```powershell
+# No diretório backend (com ambiente virtual ativo)
+cd backend
 
-[Service]
-User=deploy
-Group=deploy
-WorkingDirectory=/opt/management_system/backend
-Environment="PATH=/opt/management_system/backend/venv/bin"
-ExecStart=/opt/management_system/backend/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:8000 backend.wsgi:application
-ExecReload=/bin/kill -s HUP $MAINPID
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-```
-
-```bash
-# Ativar e iniciar serviço
-sudo systemctl daemon-reload
-sudo systemctl enable management_system
-sudo systemctl start management_system
-```
-
-#### 6️⃣ Finalização
-
-```bash
-# Executar migrações
-cd /opt/management_system/backend
-source venv/bin/activate
+# Execute as migrações
 python manage.py migrate
-python manage.py collectstatic --noinput
 
-# Criar superusuário
+# Crie um superusuário
 python manage.py createsuperuser
-
-# Verificar status dos serviços
-sudo systemctl status management_system
-sudo systemctl status nginx
+# OU use o script automático:
+python set_admin_password.py
 ```
 
-### 📖 Guia Completo de Deploy
+### 2. Iniciando os Servidores
 
-Para instruções detalhadas de deploy em produção, consulte:
+**Terminal 1 - Backend:**
+```powershell
+# Navegue para o backend
+cd backend
 
-**🐧 [Guia Manual de Deploy Linux](DEPLOY_MANUAL_LINUX.md)**
-- Configuração completa do servidor Ubuntu/Debian
-- Instalação passo-a-passo de todas as dependências
-- Configuração de PostgreSQL, Nginx e Gunicorn
-- Setup de SSL/TLS com Let's Encrypt
-- Monitoramento e manutenção
-- Solução de problemas específicos
+# Ative o ambiente virtual (se não estiver ativo)
+.\.venv\Scripts\Activate.ps1
 
-### 🔄 Atualizações
+# Inicie o servidor Django
+python manage.py runserver 0.0.0.0:8000
+```
 
-Para atualizar a aplicação, siga os passos no [Guia Manual de Deploy Linux](DEPLOY_MANUAL_LINUX.md) na seção "Manutenção e Atualizações".
+**Terminal 2 - Frontend:**
+```powershell
+# Abra um novo terminal PowerShell
+# Navegue para o frontend
+cd frontend
 
----
+# Inicie o servidor React
+npm run dev
+```
 
-## 📚 Documentação Adicional
+### 3. Acessando o Sistema
 
-### 📖 Guias de Configuração
-- **[Setup Manual IDE](SETUP_MANUAL_IDE.md)** - Configuração completa do ambiente de desenvolvimento
-- **[Deploy Manual Linux](DEPLOY_MANUAL_LINUX.md)** - Deploy em produção passo-a-passo
-- **[Funcionalidades e Regras de Negócio](FUNCIONALIDADES_E_REGRAS_DE_NEGOCIO.md)** - Documentação técnica completa
+- **Frontend (Aplicação Principal):** http://localhost:5174/
+- **Backend API:** http://localhost:8000/api/
+- **Admin Django:** http://localhost:8000/admin/
 
-### 🔧 Configurações Adicionais
+## 👥 Criando Usuários e Dados
 
-### 🔐 SSL/TLS (Let's Encrypt)
+### Credenciais Padrão
 
-Para configuração de SSL/TLS, consulte o [Guia Manual de Deploy Linux](DEPLOY_MANUAL_LINUX.md) na seção "Configuração SSL/TLS".
+Se você usou o script `set_admin_password.py`:
+- **Usuário:** admin
+- **Senha:** admin123
 
-### 📊 Monitoramento
+### Criando Dados via Admin Django
 
-Para comandos de monitoramento e logs, consulte o [Guia Manual de Deploy Linux](DEPLOY_MANUAL_LINUX.md) na seção "Monitoramento e Logs".
+1. Acesse: http://localhost:8000/admin/
+2. Faça login com as credenciais do superusuário
+3. Crie os dados na seguinte ordem:
 
-### 🔄 Backup Automático
+#### 1. Treinamentos
+- Clique em "Treinamentos" → "Adicionar"
+- Preencha: Nome, Descrição
+- Salve
 
-Para configuração de backup, consulte o [Guia Manual de Deploy Linux](DEPLOY_MANUAL_LINUX.md) na seção "Backup e Restauração".
+#### 2. Turmas
+- Clique em "Turmas" → "Adicionar"
+- Selecione o Treinamento criado
+- Preencha: Nome, Data de Início, Data de Conclusão
+- Adicione Link de Acesso (opcional)
+- Salve
 
----
+#### 3. Alunos
+- Clique em "Alunos" → "Adicionar"
+- Preencha: Nome, Email, Telefone
+- Salve
 
-## 🚨 Troubleshooting
+#### 4. Matrículas
+- Clique em "Matrículas" → "Adicionar"
+- Selecione a Turma e o Aluno
+- Salve
 
-Para solução de problemas comuns e comandos de diagnóstico, consulte:
-- **[Guia Manual de Deploy Linux](DEPLOY_MANUAL_LINUX.md)** - Seção "Solução de Problemas"
-- **[Setup Manual IDE](SETUP_MANUAL_IDE.md)** - Seção "Solução de Problemas Comuns"
+#### 5. Recursos
+- Clique em "Recursos" → "Adicionar"
+- Selecione a Turma
+- Escolha o Tipo (video, pdf, zip, link)
+- Configure Acesso Prévio e Draft conforme necessário
+- Faça upload do arquivo ou adicione URL
+- Salve
 
----
+### Criando Usuários via API
+
+```powershell
+# Exemplo usando PowerShell para criar usuário via API
+$body = @{
+    username = "novo_usuario"
+    email = "usuario@exemplo.com"
+    password = "senha123"
+    first_name = "Nome"
+    last_name = "Sobrenome"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri "http://localhost:8000/api/auth/register/" -Method POST -Body $body -ContentType "application/json"
+```
+
+## 📁 Estrutura do Projeto
+
+```
+management_system/
+├── backend/                 # Django REST Framework
+│   ├── backend/            # Configurações do Django
+│   ├── core/               # App principal
+│   ├── manage.py           # Comando Django
+│   ├── requirements.txt    # Dependências Python
+│   └── .env               # Variáveis de ambiente
+├── frontend/               # React + TypeScript
+│   ├── src/               # Código fonte
+│   ├── public/            # Arquivos públicos
+│   ├── package.json       # Dependências Node.js
+│   └── .env              # Variáveis de ambiente
+├── docker-compose.yml     # Docker para produção
+└── README.md             # Este arquivo
+```
+
+## ⚡ Funcionalidades
+
+### Para Administradores
+- ✅ Cadastro de Treinamentos
+- ✅ Gestão de Turmas
+- ✅ Upload e gestão de Recursos
+- ✅ Controle de Matrículas
+- ✅ Relatórios e estatísticas
+
+### Para Alunos
+- ✅ Visualização de Treinamentos matriculados
+- ✅ Acesso a Recursos por regras de negócio
+- ✅ Download de materiais
+- ✅ Player de vídeo integrado
+
+### Regras de Negócio
+- 📅 **Antes do início:** Alunos acessam apenas recursos com "Acesso Prévio"
+- 🚀 **Após o início:** Alunos acessam recursos que não estão em "Draft"
+- 🎥 **Vídeos:** Player integrado com opção de download
+- 🔒 **Segurança:** Autenticação JWT obrigatória
+
+## 🧪 Testes e Validação
+
+### Validação Rápida do Sistema
+Após seguir todos os passos de instalação, execute estes comandos para validar:
+
+```powershell
+# 1. Verificar Backend
+Invoke-WebRequest -Uri "http://localhost:8000/admin/" -Method GET
+# Resultado esperado: Status 200 OK
+
+# 2. Verificar Frontend  
+Invoke-WebRequest -Uri "http://localhost:5174/" -Method GET
+# Resultado esperado: Status 200 OK
+
+# 3. Verificar Integração (Proxy)
+Invoke-WebRequest -Uri "http://localhost:5174/api/treinamentos/" -Method GET
+# Resultado esperado: Status 401 (autenticação necessária - isso é correto!)
+```
+
+### Testes Completos
+Para uma validação completa do sistema, consulte o arquivo `GUIA_TESTES.md` que contém:
+- ✅ Testes de todos os endpoints da API
+- ✅ Validação da interface administrativa
+- ✅ Verificação de segurança e autenticação
+- ✅ Testes de integração frontend-backend
+- ✅ Checklist completo de validação
+
+### Status dos Testes (Última Validação)
+- 🟢 **Backend Django:** ✅ Funcionando na porta 8000
+- 🟢 **Frontend React:** ✅ Funcionando na porta 5174  
+- 🟢 **API Endpoints:** ✅ Protegidos por autenticação
+- 🟢 **Django Admin:** ✅ Acessível (admin/admin123)
+- 🟢 **Proxy Vite:** ✅ Redirecionamento funcionando
+- 🟢 **Segurança:** ✅ Endpoints protegidos corretamente
+- 🟢 **Banco de Dados:** ✅ SQLite funcionando
+
+## 🔧 Troubleshooting
+
+### Problemas Comuns
+
+#### 1. Erro de Execução de Scripts PowerShell
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+#### 2. Erro "psycopg2-binary" na Instalação
+Para desenvolvimento local, comente a linha no `requirements.txt`:
+```
+# psycopg2-binary==2.9.9  # Comentado para desenvolvimento local com SQLite
+```
+
+#### 3. Erro de CORS no Frontend
+Verifique se as URLs no `.env` do backend estão corretas:
+```env
+CORS_ALLOWED_ORIGINS=http://localhost:5174,http://127.0.0.1:5174
+```
+
+#### 4. Porta já em Uso
+Se as portas 8000 ou 5174 estiverem ocupadas:
+```powershell
+# Para backend (mude a porta)
+python manage.py runserver 0.0.0.0:8001
+
+# Para frontend (mude no package.json ou use)
+npm run dev -- --port 5175
+```
+
+#### 5. Problemas com Ambiente Virtual
+```powershell
+# Desative e reative o ambiente
+deactivate
+.\.venv\Scripts\Activate.ps1
+
+# Se não funcionar, recrie o ambiente
+Remove-Item -Recurse -Force .venv
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+### Comandos Úteis
+
+```powershell
+# Verificar status dos servidores
+netstat -an | findstr :8000    # Backend
+netstat -an | findstr :5174    # Frontend
+
+# Testar conectividade (Windows PowerShell)
+Invoke-WebRequest -Uri "http://localhost:8000/admin/" -Method GET
+Invoke-WebRequest -Uri "http://localhost:5174/" -Method GET
+
+# Verificar arquivos .env existentes
+Test-Path backend\.env         # Deve retornar True
+Test-Path frontend\.env        # Deve retornar True
+```
+
+#### 6. Problemas com Arquivos .env Existentes
+Se você encontrar arquivos `.env` já existentes:
+
+```powershell
+# Backend - verificar e fazer backup se necessário
+cd backend
+if (Test-Path .env) { 
+    Write-Host "Arquivo .env já existe - usando configuração existente"
+    Get-Content .env | Select-String "SECRET_KEY|DEBUG|DATABASE"
+}
+
+# Frontend - verificar configurações
+cd ..\frontend
+if (Test-Path .env) { 
+    Write-Host "Arquivo .env já existe - verificando configurações"
+    Get-Content .env
+}
+```
+
+#### 7. Erro de Autenticação da API
+Se receber erro sobre `tipo_perfil` obrigatório:
+
+```powershell
+# Teste correto da API de login
+$body = @{
+    username="admin"
+    password="admin123"
+    tipo_perfil="admin"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri "http://localhost:8000/api/auth/login/" -Method POST -Body $body -ContentType "application/json"
+```
+
+#### 8. Comandos curl não Funcionam no Windows
+Use comandos PowerShell equivalentes:
+
+```powershell
+# Em vez de: curl http://localhost:5174/
+Invoke-WebRequest -Uri "http://localhost:5174/" -Method GET
+
+# Em vez de: curl -X POST http://localhost:8000/api/login/
+Invoke-RestMethod -Uri "http://localhost:8000/api/login/" -Method POST -Body $body -ContentType "application/json"
+```Limpar cache do npm
+npm cache clean --force
+
+# Resetar migrações Django (cuidado!)
+Remove-Item -Recurse -Force core\migrations\0*.py
+python manage.py makemigrations
+python manage.py migrate
+
+# Coletar arquivos estáticos
+python manage.py collectstatic --noinput
+```
 
 ## 📞 Suporte
 
-Para dúvidas ou problemas:
-
-1. 📖 Consulte os guias de configuração:
-   - **[Setup Manual IDE](SETUP_MANUAL_IDE.md)** - Ambiente de desenvolvimento
-   - **[Deploy Manual Linux](DEPLOY_MANUAL_LINUX.md)** - Deploy em produção
-   - **[Funcionalidades e Regras de Negócio](FUNCIONALIDADES_E_REGRAS_DE_NEGOCIO.md)** - Documentação técnica
-2. 🐛 Reporte bugs através das Issues do GitHub
-3. 💬 Entre em contato com a equipe de desenvolvimento
+Para problemas ou dúvidas:
+1. Verifique a seção [Troubleshooting](#-troubleshooting)
+2. Consulte os logs dos servidores
+3. Verifique as configurações dos arquivos `.env`
 
 ---
 
-## 📄 Licença
-
-Este projeto está licenciado sob a [MIT License](LICENSE).
-
----
-
-**Desenvolvido com ❤️ usando Django + React**
+**Desenvolvido usando Django REST Framework + React + TypeScript**

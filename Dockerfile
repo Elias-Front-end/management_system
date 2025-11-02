@@ -34,9 +34,6 @@ COPY backend/ /app/
 # Criar diretórios necessários
 RUN mkdir -p /app/media /app/staticfiles /app/logs
 
-# Coletar arquivos estáticos
-RUN python manage.py collectstatic --noinput
-
 # Criar usuário não-root
 RUN adduser --disabled-password --gecos '' appuser \
     && chown -R appuser:appuser /app
