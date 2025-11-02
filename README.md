@@ -404,8 +404,15 @@ sudo ./deploy.sh install
 - ❌ Repositórios duplicados
 - ❌ Cache de pacotes corrompido
 - ❌ Pacotes órfãos
+- ❌ **Conflitos Node.js/npm** - Resolve conflitos entre versões do Node.js e npm
+- ❌ **Dependências Node.js quebradas** - Corrige problemas de instalação do Node.js
 
-**Nota:** O `deploy.sh` já inclui correção automática, mas o `fix-system.sh` pode ser usado separadamente se necessário.
+**Problemas específicos resolvidos:**
+- `nodejs : Conflicts: npm` - Remove npm conflitante quando Node.js 18+ já inclui npm
+- `Unable to correct problems, you have held broken packages` - Corrige dependências quebradas
+- Reinstalação automática do Node.js via NodeSource se necessário
+
+**Nota:** O `deploy.sh` já inclui correção automática de conflitos Node.js/npm, mas o `fix-system.sh` pode ser usado separadamente se necessário.
 
 ### 🔄 Atualizações
 

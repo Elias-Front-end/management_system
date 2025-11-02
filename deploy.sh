@@ -104,6 +104,57 @@ fix_package_system() {
     fi
 }
 
+fix_nodejs_conflicts() {
+    print_step "Verificando e corrigindo conflitos Node.js/npm..."
+    
+    # Verificar se há conflito entre nodejs e npm
+    if dpkg -l | grep -q "^ii.*nodejs" && dpkg -l | grep -q "^ii.*npm"; then
+        local nodejs_version=$(dpkg -l | grep "^ii.*nodejs" | awk '{print $3}')
+        
+        # Se Node.js é da NodeSource (versão 18+), remover npm separado
+        if [[ "$nodejs_version" =~ ^18\.|^19\.|^[2-9][0-9]\. ]]; then
+            print_warning "Detectado conflito: Node.js ${nodejs_version} com npm separado"
+            print_step "Removendo npm conflitante..."
+            
+            # Remover npm e suas dependências conflitantes
+            apt-get remove -y npm
+            apt-get autoremove -y
+            
+            # Limpar cache
+            apt-get clean
+            
+            print_success "Conflito Node.js/npm resolvido"
+            return 0
+        fi
+    fi
+    
+    # Verificar se há pacotes quebrados relacionados ao Node.js
+    if apt-get check 2>&1 | grep -i "node\|npm"; then
+        print_warning "Dependências Node.js quebradas detectadas"
+        
+        # Tentar corrigir dependências quebradas
+        print_step "Corrigindo dependências Node.js..."
+        apt-get install -f -y
+        
+        # Se ainda há problemas, remover e reinstalar
+        if ! apt-get check &>/dev/null; then
+            print_step "Reinstalando Node.js..."
+            
+            # Remover instalações conflitantes
+            apt-get remove -y nodejs npm node-* 2>/dev/null || true
+            apt-get autoremove -y
+            
+            # Reinstalar Node.js via NodeSource
+            curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+            apt-get install -y nodejs
+        fi
+        
+        print_success "Dependências Node.js corrigidas"
+    else
+        print_success "Node.js sem conflitos detectados"
+    fi
+}
+
 check_user_exists() {
     if ! id "$APP_USER" &>/dev/null; then
         print_step "Criando usuário $APP_USER..."
@@ -118,17 +169,18 @@ check_user_exists() {
 install_dependencies() {
     print_step "Atualizando sistema e instalando dependências..."
     
+    # Corrigir conflitos Node.js/npm antes da instalação
+    fix_nodejs_conflicts
+    
     # Atualizar sistema
     apt update && apt upgrade -y
     
-    # Instalar dependências essenciais
+    # Instalar dependências essenciais (sem npm para evitar conflitos)
     apt install -y \
         python3 \
         python3-pip \
         python3-venv \
         python3-dev \
-        nodejs \
-        npm \
         postgresql \
         postgresql-contrib \
         nginx \
@@ -142,11 +194,28 @@ install_dependencies() {
         build-essential \
         libpq-dev
     
-    # Instalar versão mais recente do Node.js se necessário
-    if ! node --version | grep -q "v1[89]\|v[2-9][0-9]"; then
-        print_step "Instalando Node.js 18 LTS..."
+    # Instalar Node.js 18 LTS via NodeSource (inclui npm integrado)
+    print_step "Instalando Node.js 18 LTS..."
+    
+    # Verificar se já temos Node.js 18+
+    if command -v node &>/dev/null && node --version | grep -q "v1[89]\|v[2-9][0-9]"; then
+        print_success "Node.js $(node --version) já instalado"
+    else
+        # Remover versões antigas conflitantes
+        apt-get remove -y nodejs npm node-* 2>/dev/null || true
+        apt-get autoremove -y
+        
+        # Instalar via NodeSource
         curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
         apt install -y nodejs
+        
+        # Verificar instalação
+        if command -v node &>/dev/null && command -v npm &>/dev/null; then
+            print_success "Node.js $(node --version) e npm $(npm --version) instalados"
+        else
+            print_error "Falha na instalação do Node.js"
+            exit 1
+        fi
     fi
     
     print_success "Dependências instaladas"
