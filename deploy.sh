@@ -58,6 +58,52 @@ check_root() {
     fi
 }
 
+fix_package_system() {
+    print_step "Verificando e corrigindo sistema de pacotes..."
+    
+    # Verificar se dpkg está em estado consistente
+    if ! dpkg --audit &>/dev/null; then
+        print_warning "Sistema de pacotes inconsistente. Corrigindo..."
+        
+        # Corrigir pacotes interrompidos
+        print_step "Configurando pacotes interrompidos..."
+        dpkg --configure -a || {
+            print_warning "Erro ao configurar pacotes. Tentando correção forçada..."
+            dpkg --configure -a --force-confold
+        }
+        
+        # Corrigir dependências quebradas
+        print_step "Corrigindo dependências quebradas..."
+        apt-get install -f -y
+        
+        # Limpar cache de pacotes
+        print_step "Limpando cache de pacotes..."
+        apt-get clean
+        apt-get autoclean
+        
+        # Remover pacotes órfãos
+        apt-get autoremove -y
+        
+        print_success "Sistema de pacotes corrigido"
+    else
+        print_success "Sistema de pacotes está consistente"
+    fi
+    
+    # Verificar e corrigir repositórios duplicados
+    if grep -r "google-chrome" /etc/apt/sources.list.d/ | grep -q "google.list"; then
+        print_warning "Repositórios Google duplicados detectados. Corrigindo..."
+        
+        # Backup dos arquivos de repositório
+        cp /etc/apt/sources.list.d/google.list /etc/apt/sources.list.d/google.list.backup 2>/dev/null || true
+        cp /etc/apt/sources.list.d/google-chrome.list /etc/apt/sources.list.d/google-chrome.list.backup 2>/dev/null || true
+        
+        # Remover duplicatas (manter apenas google-chrome.list)
+        rm -f /etc/apt/sources.list.d/google.list
+        
+        print_success "Repositórios duplicados corrigidos"
+    fi
+}
+
 check_user_exists() {
     if ! id "$APP_USER" &>/dev/null; then
         print_step "Criando usuário $APP_USER..."
@@ -540,6 +586,7 @@ case "${1:-install}" in
     "install")
         print_step "Iniciando instalação completa..."
         check_root
+        fix_package_system
         check_user_exists
         install_dependencies
         setup_postgresql
