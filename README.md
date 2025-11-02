@@ -140,20 +140,16 @@ VITE_API_URL=http://localhost:8000/api
 VITE_MEDIA_URL=http://localhost:8000
 ```
 
-### 🤖 Configuração Automatizada (Recomendado)
+### 📖 Guia Completo de Desenvolvimento
 
-Execute o script de configuração automática:
+Para instruções detalhadas de configuração do ambiente de desenvolvimento, consulte:
 
-**Windows (PowerShell):**
-```powershell
-.\setup-local.ps1
-```
-
-**Linux/Mac:**
-```bash
-chmod +x setup-local.sh
-./setup-local.sh
-```
+**📋 [Guia Manual de Setup IDE](SETUP_MANUAL_IDE.md)**
+- Configuração completa para Windows, macOS e Linux
+- Instalação passo-a-passo de todas as dependências
+- Configuração de IDEs (VS Code, PyCharm)
+- Scripts úteis para desenvolvimento
+- Solução de problemas comuns
 
 ### 🚀 Executando o Sistema
 
@@ -362,216 +358,52 @@ sudo systemctl status management_system
 sudo systemctl status nginx
 ```
 
-### 🤖 Deploy Automatizado (Recomendado)
+### 📖 Guia Completo de Deploy
 
-Execute o script de deploy automático:
+Para instruções detalhadas de deploy em produção, consulte:
 
-```bash
-# Baixar e executar script
-curl -O https://raw.githubusercontent.com/Elias-Front-end/management_system/main/deploy.sh
-chmod +x deploy.sh
-sudo ./deploy.sh
-```
-
-O script automaticamente:
-- ✅ Configura o servidor com todas as dependências
-- ✅ Clona o repositório
-- ✅ Configura PostgreSQL
-- ✅ Instala dependências Python e Node.js
-- ✅ Configura Nginx e Gunicorn
-- ✅ Executa migrações e coleta arquivos estáticos
-- ✅ Configura SSL com Let's Encrypt (opcional)
-
-### 🔧 Correção de Problemas do Sistema
-
-Se encontrar erros relacionados ao sistema de pacotes (como `dpkg was interrupted`), use o script de correção:
-
-```bash
-# Baixar script de correção
-curl -O https://raw.githubusercontent.com/Elias-Front-end/management_system/main/fix-system.sh
-chmod +x fix-system.sh
-
-# Executar correção
-sudo ./fix-system.sh
-
-# Depois executar o deploy normalmente
-sudo ./deploy.sh install
-```
-
-**O script de correção resolve:**
-- ❌ `dpkg was interrupted` - Pacotes interrompidos
-- ❌ Dependências quebradas
-- ❌ Repositórios duplicados
-- ❌ Cache de pacotes corrompido
-- ❌ Pacotes órfãos
-- ❌ **Conflitos Node.js/npm** - Resolve conflitos entre versões do Node.js e npm
-- ❌ **Dependências Node.js quebradas** - Corrige problemas de instalação do Node.js
-
-**Problemas específicos resolvidos:**
-- `nodejs : Conflicts: npm` - Remove npm conflitante quando Node.js 18+ já inclui npm
-- `Unable to correct problems, you have held broken packages` - Corrige dependências quebradas
-- Reinstalação automática do Node.js via NodeSource se necessário
-
-**Nota:** O `deploy.sh` já inclui correção automática de conflitos Node.js/npm, mas o `fix-system.sh` pode ser usado separadamente se necessário.
+**🐧 [Guia Manual de Deploy Linux](DEPLOY_MANUAL_LINUX.md)**
+- Configuração completa do servidor Ubuntu/Debian
+- Instalação passo-a-passo de todas as dependências
+- Configuração de PostgreSQL, Nginx e Gunicorn
+- Setup de SSL/TLS com Let's Encrypt
+- Monitoramento e manutenção
+- Solução de problemas específicos
 
 ### 🔄 Atualizações
 
-Para atualizar a aplicação:
-
-**Manual:**
-```bash
-cd /opt/management_system
-git pull origin main
-cd backend && source venv/bin/activate
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py collectstatic --noinput
-cd ../frontend && npm install && npm run build
-sudo cp -r dist/* /var/www/management_system/
-sudo systemctl restart management_system
-```
-
-**Automatizado:**
-```bash
-./deploy.sh update
-```
+Para atualizar a aplicação, siga os passos no [Guia Manual de Deploy Linux](DEPLOY_MANUAL_LINUX.md) na seção "Manutenção e Atualizações".
 
 ---
 
-## 🛠️ Scripts de Automação
+## 📚 Documentação Adicional
 
-### 📝 setup-local.ps1 (Windows)
+### 📖 Guias de Configuração
+- **[Setup Manual IDE](SETUP_MANUAL_IDE.md)** - Configuração completa do ambiente de desenvolvimento
+- **[Deploy Manual Linux](DEPLOY_MANUAL_LINUX.md)** - Deploy em produção passo-a-passo
+- **[Funcionalidades e Regras de Negócio](FUNCIONALIDADES_E_REGRAS_DE_NEGOCIO.md)** - Documentação técnica completa
 
-Script para configuração automática do ambiente de desenvolvimento local no Windows.
-
-**Funcionalidades:**
-- ✅ Verifica e instala dependências (Python, Node.js)
-- ✅ Clona repositório (se necessário)
-- ✅ Configura ambiente virtual Python
-- ✅ Instala dependências do backend e frontend
-- ✅ Configura arquivos .env
-- ✅ Executa migrações
-- ✅ Inicia servidores de desenvolvimento
-
-**Uso:**
-```powershell
-# Executar como Administrador
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-.\setup-local.ps1
-```
-
-### 📝 deploy.sh (Linux)
-
-Script para deploy e gerenciamento da aplicação no servidor Linux.
-
-**Funcionalidades:**
-- ✅ Configuração completa do servidor
-- ✅ Instalação de dependências
-- ✅ Configuração de banco de dados
-- ✅ Setup do Nginx e Gunicorn
-- ✅ Configuração de SSL/TLS
-- ✅ Atualizações automáticas
-- ✅ Backup e restauração
-
-**Comandos disponíveis:**
-```bash
-./deploy.sh install    # Instalação inicial
-./deploy.sh update     # Atualizar aplicação
-./deploy.sh backup     # Fazer backup
-./deploy.sh restore    # Restaurar backup
-./deploy.sh status     # Verificar status
-./deploy.sh logs       # Visualizar logs
-```
-
----
-
-## 🔧 Configurações Adicionais
+### 🔧 Configurações Adicionais
 
 ### 🔐 SSL/TLS (Let's Encrypt)
 
-```bash
-# Instalar Certbot
-sudo apt install certbot python3-certbot-nginx
-
-# Obter certificado
-sudo certbot --nginx -d seu-dominio.com -d www.seu-dominio.com
-
-# Renovação automática
-sudo crontab -e
-# Adicionar: 0 12 * * * /usr/bin/certbot renew --quiet
-```
+Para configuração de SSL/TLS, consulte o [Guia Manual de Deploy Linux](DEPLOY_MANUAL_LINUX.md) na seção "Configuração SSL/TLS".
 
 ### 📊 Monitoramento
 
-```bash
-# Verificar logs
-sudo journalctl -u management_system -f
-sudo tail -f /var/log/nginx/access.log
-sudo tail -f /var/log/nginx/error.log
-
-# Verificar status dos serviços
-sudo systemctl status management_system nginx postgresql
-```
+Para comandos de monitoramento e logs, consulte o [Guia Manual de Deploy Linux](DEPLOY_MANUAL_LINUX.md) na seção "Monitoramento e Logs".
 
 ### 🔄 Backup Automático
 
-```bash
-# Criar script de backup
-sudo nano /usr/local/bin/backup_management_system.sh
-
-# Adicionar ao crontab para backup diário
-sudo crontab -e
-# Adicionar: 0 2 * * * /usr/local/bin/backup_management_system.sh
-```
+Para configuração de backup, consulte o [Guia Manual de Deploy Linux](DEPLOY_MANUAL_LINUX.md) na seção "Backup e Restauração".
 
 ---
 
 ## 🚨 Troubleshooting
 
-### ❌ Problemas Comuns
-
-**1. Erro 500 Internal Server Error**
-```bash
-# Verificar logs
-sudo journalctl -u management_system -n 50
-# Verificar configurações do .env
-# Verificar permissões dos arquivos
-```
-
-**2. Erro 502 Bad Gateway**
-```bash
-# Verificar se Gunicorn está rodando
-sudo systemctl status management_system
-# Verificar configuração do Nginx
-sudo nginx -t
-```
-
-**3. Arquivos Estáticos Não Carregam**
-```bash
-# Coletar arquivos estáticos novamente
-python manage.py collectstatic --noinput
-# Verificar permissões
-sudo chown -R deploy:deploy /opt/management_system
-```
-
-### 🔍 Comandos de Diagnóstico
-
-```bash
-# Verificar portas em uso
-sudo netstat -tlnp | grep -E ':80|:443|:8000|:5432'
-
-# Verificar processos
-ps aux | grep -E "(gunicorn|nginx|postgres)"
-
-# Verificar espaço em disco
-df -h
-
-# Verificar memória
-free -h
-
-# Verificar logs do sistema
-sudo journalctl -xe
-```
+Para solução de problemas comuns e comandos de diagnóstico, consulte:
+- **[Guia Manual de Deploy Linux](DEPLOY_MANUAL_LINUX.md)** - Seção "Solução de Problemas"
+- **[Setup Manual IDE](SETUP_MANUAL_IDE.md)** - Seção "Solução de Problemas Comuns"
 
 ---
 
@@ -579,7 +411,10 @@ sudo journalctl -xe
 
 Para dúvidas ou problemas:
 
-1. 📖 Consulte a documentação completa em `FUNCIONALIDADES_E_REGRAS_DE_NEGOCIO.md`
+1. 📖 Consulte os guias de configuração:
+   - **[Setup Manual IDE](SETUP_MANUAL_IDE.md)** - Ambiente de desenvolvimento
+   - **[Deploy Manual Linux](DEPLOY_MANUAL_LINUX.md)** - Deploy em produção
+   - **[Funcionalidades e Regras de Negócio](FUNCIONALIDADES_E_REGRAS_DE_NEGOCIO.md)** - Documentação técnica
 2. 🐛 Reporte bugs através das Issues do GitHub
 3. 💬 Entre em contato com a equipe de desenvolvimento
 
