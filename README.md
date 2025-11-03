@@ -82,18 +82,11 @@ pip install -r requirements.txt
 
 ### 3. Configurando Variáveis de Ambiente do Backend
 
-**⚠️ IMPORTANTE:** Se já existe um arquivo `.env` no diretório `backend`, você pode:
-- **Opção A:** Usar o arquivo existente (recomendado se já está funcionando)
-- **Opção B:** Fazer backup e recriar: `copy .env .env.backup` e depois `copy .env.example .env`
-
-Para criar um novo arquivo `.env`:
+Crie o arquivo `.env` no diretório `backend`:
 
 ```powershell
-# Navegue para o diretório backend (se não estiver lá)
-cd backend
-
-# Copie o arquivo de exemplo (apenas se não existir .env)
-if (!(Test-Path .env)) { copy .env.example .env }
+# Copie o arquivo de exemplo
+copy .env.example .env
 ```
 
 Edite o arquivo `.env` com as seguintes configurações para desenvolvimento:
@@ -143,22 +136,6 @@ npm install
 ```
 
 Crie o arquivo `.env` no diretório `frontend`:
-
-**⚠️ NOTA:** Se já existe um arquivo `.env` no diretório `frontend`, verifique se contém as configurações abaixo ou faça backup antes de substituir.
-
-```powershell
-# Navegue para o diretório frontend
-cd frontend
-
-# Verifique se já existe .env
-if (Test-Path .env) { 
-    Write-Host "Arquivo .env já existe. Verifique as configurações abaixo." 
-} else { 
-    Write-Host "Criando novo arquivo .env" 
-}
-```
-
-Configurações necessárias no `.env` do frontend:
 
 ```env
 # Frontend Environment Variables - Development
@@ -392,6 +369,8 @@ Remove-Item -Recurse -Force .venv
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+```
+
 ### Comandos Úteis
 
 ```powershell
@@ -399,58 +378,7 @@ pip install -r requirements.txt
 netstat -an | findstr :8000    # Backend
 netstat -an | findstr :5174    # Frontend
 
-# Testar conectividade (Windows PowerShell)
-Invoke-WebRequest -Uri "http://localhost:8000/admin/" -Method GET
-Invoke-WebRequest -Uri "http://localhost:5174/" -Method GET
-
-# Verificar arquivos .env existentes
-Test-Path backend\.env         # Deve retornar True
-Test-Path frontend\.env        # Deve retornar True
-```
-
-#### 6. Problemas com Arquivos .env Existentes
-Se você encontrar arquivos `.env` já existentes:
-
-```powershell
-# Backend - verificar e fazer backup se necessário
-cd backend
-if (Test-Path .env) { 
-    Write-Host "Arquivo .env já existe - usando configuração existente"
-    Get-Content .env | Select-String "SECRET_KEY|DEBUG|DATABASE"
-}
-
-# Frontend - verificar configurações
-cd ..\frontend
-if (Test-Path .env) { 
-    Write-Host "Arquivo .env já existe - verificando configurações"
-    Get-Content .env
-}
-```
-
-#### 7. Erro de Autenticação da API
-Se receber erro sobre `tipo_perfil` obrigatório:
-
-```powershell
-# Teste correto da API de login
-$body = @{
-    username="admin"
-    password="admin123"
-    tipo_perfil="admin"
-} | ConvertTo-Json
-
-Invoke-RestMethod -Uri "http://localhost:8000/api/auth/login/" -Method POST -Body $body -ContentType "application/json"
-```
-
-#### 8. Comandos curl não Funcionam no Windows
-Use comandos PowerShell equivalentes:
-
-```powershell
-# Em vez de: curl http://localhost:5174/
-Invoke-WebRequest -Uri "http://localhost:5174/" -Method GET
-
-# Em vez de: curl -X POST http://localhost:8000/api/login/
-Invoke-RestMethod -Uri "http://localhost:8000/api/login/" -Method POST -Body $body -ContentType "application/json"
-```Limpar cache do npm
+# Limpar cache do npm
 npm cache clean --force
 
 # Resetar migrações Django (cuidado!)

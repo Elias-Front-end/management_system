@@ -1,80 +1,50 @@
-# ======================================================
-# 🐳 DOCKER COMPOSE - DESENVOLVIMENTO
-# ======================================================
-
 version: '3.8'
 
 services:
-  # Banco de dados PostgreSQL
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - media_volume:/app/media
+    environment:
+      - DJANGO_SETTINGS_MODULE=backend.settings
+    env_file:
+      - .env.development
+    depends_on:
+      - db
+    command: python manage.py runserver 0.0.0.0:8000
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
   db:
     image: postgres:15-alpine
-    container_name: management_system_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: management_system
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres123
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./backend/sql:/docker-entrypoint-initdb.d
+      POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
-    networks:
-      - management_network
 
-  # Backend Django
-  backend:
-    build: .
-    container_name: management_system_backend
-    environment:
-      - DEBUG=True
-      - DATABASE_ENGINE=postgresql
-      - DATABASE_NAME=management_system
-      - DATABASE_USER=postgres
-      - DATABASE_PASSWORD=postgres123
-      - DATABASE_HOST=db
-      - DATABASE_PORT=5432
-      - SECRET_KEY=django-insecure-dev-key-change-in-production
-      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,backend
-      - CORS_ALLOWED_ORIGINS=http://localhost:5174,http://127.0.0.1:5174
-    volumes:
-      - ./backend:/app
-      - media_files:/app/media
-      - static_files:/app/staticfiles
+  nginx:
+    image: nginx:alpine
     ports:
-      - "8000:8000"
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - media_volume:/var/www/media
     depends_on:
-      - db
-    networks:
-      - management_network
-    command: >
-      sh -c "python manage.py migrate &&
-             python manage.py collectstatic --noinput &&
-             python manage.py runserver 0.0.0.0:8000"
-
-  # Frontend React (opcional para desenvolvimento)
-  frontend:
-    image: node:18-alpine
-    container_name: management_system_frontend
-    working_dir: /app
-    environment:
-      - NODE_ENV=development
-      - VITE_API_BASE_URL=http://localhost:8000/api
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    ports:
-      - "5174:5174"
-    networks:
-      - management_network
-    command: >
-      sh -c "npm install &&
-             npm run dev -- --host 0.0.0.0"
+      - backend
+      - frontend
 
 volumes:
   postgres_data:
-  media_files:
-  static_files:
-
-networks:
-  management_network:
-    driver: bridge
+  media_volume:

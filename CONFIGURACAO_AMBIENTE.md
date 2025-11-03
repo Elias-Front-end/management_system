@@ -1,18 +1,5 @@
 # 🔧 Configuração de Ambiente - Sistema de Gestão de Sala de Aula
 
-## 🚀 Início Rápido
-
-**Para usuários novos, siga estes passos primeiro:**
-
-1. **📖 Leia o README.md completo** - Contém instruções passo a passo de instalação
-2. **⚡ Execute o setup básico** seguindo o README.md
-3. **🧪 Execute os testes** usando o GUIA_TESTES.md
-4. **📚 Consulte este documento** para entender as configurações em detalhes
-
-**⚠️ IMPORTANTE:** Este documento é para **referência técnica**. Para instalação inicial, use o **README.md**.
-
----
-
 ## 📋 Visão Geral
 
 Este documento descreve a estrutura de configuração de ambiente do Sistema de Gestão de Sala de Aula, incluindo todos os arquivos `.env`, `.gitignore` e `.gitattributes`.

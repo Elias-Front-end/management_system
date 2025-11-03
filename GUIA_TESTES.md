@@ -51,13 +51,7 @@ Invoke-WebRequest -Uri "http://localhost:5174/api/treinamentos/" -Method GET
 $body = @{username="admin"; password="admin123"} | ConvertTo-Json
 Invoke-RestMethod -Uri "http://localhost:8000/api/auth/login/" -Method POST -Body $body -ContentType "application/json"
 
-# Resultado esperado: Erro {"error":"Tipo de perfil é obrigatório e deve ser \"admin\" ou \"aluno\""}
-
-# Para testar com tipo_perfil correto:
-$bodyCompleto = @{username="admin"; password="admin123"; tipo_perfil="admin"} | ConvertTo-Json
-Invoke-RestMethod -Uri "http://localhost:8000/api/auth/login/" -Method POST -Body $bodyCompleto -ContentType "application/json"
-
-# Resultado esperado: Token JWT de autenticação
+# Resultado esperado: Erro informando que tipo_perfil é obrigatório
 ```
 
 ## 🎯 3. TESTES FUNCIONAIS DO FRONTEND
