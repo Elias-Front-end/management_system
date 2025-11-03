@@ -36,7 +36,8 @@ RUN mkdir -p /app/media /app/staticfiles /app/logs
 
 # Criar usuário não-root
 RUN adduser --disabled-password --gecos '' appuser \
-    && chown -R appuser:appuser /app
+    && chown -R appuser:appuser /app \
+    && chmod -R 755 /app/logs
 USER appuser
 
 # Expor porta
