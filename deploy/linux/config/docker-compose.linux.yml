@@ -5,8 +5,6 @@
 # Baseado em docker-compose.prod.yml com otimizações
 # ======================================================
 
-version: '3.8'
-
 services:
   # Banco de dados PostgreSQL
   db:
