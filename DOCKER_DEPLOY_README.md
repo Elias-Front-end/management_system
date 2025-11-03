@@ -30,8 +30,8 @@ docker-compose ps
 ```
 
 Acesse:
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000
+- Frontend: http://localhost:5174
+- Backend API: http://localhost:8000/api
 - Admin Django: http://localhost:8000/admin
 
 ### Produção
@@ -119,24 +119,71 @@ management_system/
 └── .env.production             # Variáveis produção
 ```
 
+## 🌐 Configuração de Portas
+
+O sistema utiliza as seguintes portas conforme definido no `.env.example`:
+
+### Portas Padrão
+
+**Desenvolvimento (`docker-compose.yml`)**:
+- **Frontend**: `5174` - Interface React/Vite (acesso direto)
+- **Backend API**: `8000` - Django REST API (acesso direto)
+- **Database**: `5432` - PostgreSQL
+
+**Produção (`docker-compose.prod.yml`)**:
+- **Nginx**: `80/443` - Proxy reverso (único ponto de entrada)
+- **Frontend**: Interno - Servido pelo Nginx
+- **Backend API**: Interno - Proxy via Nginx
+- **Database**: `5432` - PostgreSQL
+
+### URLs de Acesso
+- **Frontend**: `http://localhost:5174`
+- **Backend API**: `http://localhost:8000/api`
+- **Admin Django**: `http://localhost:8000/admin`
+- **Database**: `localhost:5432`
+
+> **⚠️ Importante**: As portas definidas no `docker-compose.yml` devem estar alinhadas com as configurações do `.env.example` para evitar erros de conectividade.
+
 ## ⚙️ Configuração de Variáveis de Ambiente
 
 ### Desenvolvimento (.env.development)
 
 ```env
+# Django Backend
 DJANGO_SECRET_KEY=sua-chave-secreta-aqui
 DJANGO_DEBUG=True
-DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
-DATABASE_URL=sqlite:///db.sqlite3
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+
+# Database (SQLite para desenvolvimento)
+DATABASE_ENGINE=sqlite
+DATABASE_NAME=db.sqlite3
+
+# URLs da aplicação (conforme .env.example)
+API_BASE_URL=http://localhost:8000/api
+FRONTEND_URL=http://localhost:5174
 ```
 
 ### Produção (.env.production)
 
 ```env
+# Django Backend
 DJANGO_SECRET_KEY=CHAVE_SUPER_SEGURA_AQUI
 DJANGO_DEBUG=False
 DJANGO_ALLOWED_HOSTS=seu-dominio.com,www.seu-dominio.com
-DATABASE_URL=postgresql://postgres:senha@db:5432/management_system
+
+# Database (PostgreSQL para produção)
+DATABASE_ENGINE=postgresql
+DATABASE_NAME=management_system
+DATABASE_USER=postgres
+DATABASE_PASSWORD=senha_super_segura
+DATABASE_HOST=db
+DATABASE_PORT=5432
+
+# URLs da aplicação
+API_BASE_URL=https://seu-dominio.com/api
+FRONTEND_URL=https://seu-dominio.com
+
+# Email (opcional)
 EMAIL_HOST=smtp.gmail.com
 EMAIL_HOST_USER=seu-email@gmail.com
 EMAIL_HOST_PASSWORD=sua-senha-app
@@ -325,6 +372,142 @@ sudo ufw enable
    - Usar cache (Redis/Memcached)
    - Otimizar queries do banco
    - Configurar logging adequado
+
+## 🔧 Resolução de Problemas Comuns
+
+### Erro 405 (Method Not Allowed) no Login
+
+**Problema**: Requisições de login retornam erro 405.
+
+**Causa**: Configuração incorreta de portas entre frontend e backend.
+
+**Solução**:
+1. Verificar se as portas no `docker-compose.yml` estão corretas:
+   ```yaml
+   frontend:
+     ports:
+       - "5174:80"  # Deve ser 5174, não 3000
+   ```
+
+2. Verificar configuração da API no frontend (`src/services/api.ts`):
+   ```typescript
+   const API_BASE_URL = 'http://localhost:8000/api';
+   ```
+
+3. Reconstruir containers após mudanças:
+   ```bash
+   docker-compose down
+   docker-compose up -d --build
+   ```
+
+### Container não inicia
+
+**Problema**: Container falha ao iniciar.
+
+**Soluções**:
+```bash
+# Verificar logs detalhados
+docker-compose logs [nome-do-serviço]
+
+# Verificar uso de portas
+sudo netstat -tulpn | grep :5174
+
+# Limpar containers e volumes
+docker-compose down -v
+docker system prune -f
+```
+
+### Erro de conexão com banco de dados
+
+**Problema**: Backend não consegue conectar ao PostgreSQL.
+
+**Soluções**:
+```bash
+# Verificar se o container do banco está rodando
+docker-compose ps
+
+# Verificar logs do banco
+docker-compose logs db
+
+# Executar migrações manualmente
+docker-compose exec backend python manage.py migrate
+```
+
+### Frontend não carrega
+
+**Problema**: Página em branco ou erro 404.
+
+**Soluções**:
+```bash
+# Verificar se o build foi feito corretamente
+docker-compose logs frontend
+
+# Reconstruir apenas o frontend
+docker-compose build frontend
+docker-compose up -d frontend
+
+# Verificar configuração do Nginx
+docker-compose exec frontend cat /etc/nginx/conf.d/default.conf
+```
+
+### Problemas de CORS
+
+**Problema**: Erro de CORS ao fazer requisições da API.
+
+**Solução**: Verificar configuração no `backend/settings.py`:
+```python
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5174",  # Porta correta do frontend
+    "http://127.0.0.1:5174",
+]
+```
+
+## ✅ Checklist de Verificação
+
+Após o deploy, verifique se tudo está funcionando:
+
+### Desenvolvimento
+```bash
+# 1. Verificar se todos os containers estão rodando
+docker-compose ps
+
+# 2. Testar acesso ao frontend
+curl -I http://localhost:5174
+
+# 3. Testar API do backend
+curl -I http://localhost:8000/api/
+
+# 4. Verificar logs por erros
+docker-compose logs --tail=50
+
+# 5. Testar login na interface
+# Acesse http://localhost:5174 e faça login com admin/admin123
+```
+
+### Produção
+```bash
+# 1. Verificar containers em produção
+docker-compose -f docker-compose.prod.yml ps
+
+# 2. Testar acesso via Nginx
+curl -I http://seu-dominio.com
+
+# 3. Verificar SSL (se configurado)
+curl -I https://seu-dominio.com
+
+# 4. Testar API via proxy
+curl -I http://seu-dominio.com/api/
+
+# 5. Verificar logs de produção
+docker-compose -f docker-compose.prod.yml logs --tail=50
+```
+
+### Indicadores de Sucesso
+- ✅ Frontend carrega em `http://localhost:5174`
+- ✅ API responde em `http://localhost:8000/api/`
+- ✅ Login funciona sem erro 405
+- ✅ Admin Django acessível em `http://localhost:8000/admin`
+- ✅ Banco de dados conectado e migrações aplicadas
 
 ## 📞 Suporte
 

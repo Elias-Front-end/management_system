@@ -6,7 +6,7 @@ import type {
 
 // Prefer relative API URL during development so Vite proxy can handle requests
 // Allows switching to explicit URL via environment variable when needed
-const API_BASE_URL = (import.meta as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL ?? '/api';
+const API_BASE_URL = (import.meta as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL ?? 'http://localhost:8000/api';
 
 // Function to get CSRF token from cookie
 function getCSRFToken(): string | null {
