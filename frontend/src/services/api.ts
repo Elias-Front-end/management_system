@@ -6,7 +6,7 @@ import type {
 
 // Prefer relative API URL during development so Vite proxy can handle requests
 // Allows switching to explicit URL via environment variable when needed
-const API_BASE_URL = (import.meta as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL ?? 'http://localhost:8000/api';
+const API_BASE_URL = (import.meta as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL ?? '/api';
 
 // Function to get CSRF token from cookie
 function getCSRFToken(): string | null {
@@ -14,10 +14,10 @@ function getCSRFToken(): string | null {
   let cookieValue = null;
   if (document.cookie && document.cookie !== '') {
     const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.substring(0, name.length + 1) === (name + '=')) {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+    for (const cookie of cookies) {
+      const trimmed = cookie.trim();
+      if (trimmed.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(trimmed.substring(name.length + 1));
         break;
       }
     }

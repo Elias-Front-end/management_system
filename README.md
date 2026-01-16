@@ -65,7 +65,7 @@ cd management_system
 
 ```powershell
 # Navegue para o diretório do backend
-cd backend
+c
 
 # Crie um ambiente virtual Python
 python -m venv .venv

@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/authStore';
 import api from './services/api';
 import { Layout } from './components/Layout';
 import { AdminLayout } from './components/AdminLayout';
-import Notifications from './components/Notifications';
 import InactivityWrapper from './components/InactivityWrapper';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
@@ -88,6 +88,7 @@ function App() {
 
   return (
     <Router>
+      <Toaster position="top-right" reverseOrder={false} />
       <InactivityWrapper>
         <div className="min-h-screen bg-gray-50">
           <Routes>
@@ -219,9 +220,6 @@ function App() {
           {/* Catch all route */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-
-        {/* Global Notifications - mounted once to cover all routes including Login */}
-        <Notifications />
       </div>
     </InactivityWrapper>
   </Router>
