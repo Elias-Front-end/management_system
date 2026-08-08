@@ -30,7 +30,7 @@ COPY --from=backend-builder /usr/local/lib/python3.12/site-packages /usr/local/l
 COPY --from=backend-builder /app/backend /app/backend
 
 # Copia a configuração do Nginx (se houver) – opcional
-COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
 
 WORKDIR /app/backend
 EXPOSE 8000 80
