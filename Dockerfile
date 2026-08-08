@@ -32,7 +32,7 @@ COPY --from=backend-builder /app/backend /app/backend
 # Copia a configuração do Nginx (se houver) – opcional
 COPY nginx/nginx.conf /etc/nginx/nginx.conf
 
-WORKDIR /app/backend/backend
+WORKDIR /app/backend
 EXPOSE 8000 80
 # Executa migrações, inicia Django (Gunicorn) e Nginx
 CMD sh -c "python3 manage.py migrate && gunicorn backend.wsgi:application --bind 0.0.0.0:8000 & nginx -g 'daemon off;'"
