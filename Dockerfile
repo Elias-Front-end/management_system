@@ -17,16 +17,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends gcc libpq-dev &
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# ---------- Etapa 3: Montagem da imagem final ----------
-FROM nginx:stable-alpine
-# Copia os assets estáticos gerados pelo frontend para o diretório padrão do Nginx
+# ---------- Etapa 3: Imagem final ----------
+# Usa uma imagem que já contém Python e instalamos Nginx nela
+FROM python:3.12-slim
+# Instala Nginx
+RUN apt-get update && apt-get install -y --no-install-recommends nginx && rm -rf /var/lib/apt/lists/*
+
+# Copia assets estáticos gerados pelo frontend para o diretório padrão do Nginx
 COPY --from=frontend-builder /app/frontend/dist /usr/share/nginx/html
 # Copia código e bibliotecas do backend
 COPY --from=backend-builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=backend-builder /app/backend /app/backend
-# Opcional: configura Nginx como reverse‑proxy para o backend (porta 8000)
+
+# Copia a configuração do Nginx (se houver) – opcional
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 
 WORKDIR /app/backend
-# Executa migrações e inicia o servidor Django + Nginx
-CMD ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000 & nginx -g 'daemon off;'" ]
+EXPOSE 8000 80
+# Executa migrações, inicia Django (Gunicorn) e Nginx
+CMD sh -c "python manage.py migrate && gunicorn backend.wsgi:application --bind 0.0.0.0:8000 & nginx -g 'daemon off;'" ]
