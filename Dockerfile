@@ -22,7 +22,7 @@ COPY backend/ .
 # Usa uma imagem que já contém Python e instalamos Nginx nela
 FROM python:3.12-slim
 # Instala Nginx
-RUN apt-get update && apt-get install -y --no-install-recommends nginx && sed -i 's/user www-data;/user nobody;/' /etc/nginx/nginx.conf && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends nginx && rm -rf /var/lib/apt/lists/*
 
 # Copia assets estáticos gerados pelo frontend para o diretório padrão do Nginx
 COPY --from=frontend-builder /app/frontend/dist /usr/share/nginx/html
