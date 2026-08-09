@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends gcc libpq-dev &
 # Instala dependências Python do backend
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+COPY backend/ .
 
 # ---------- Etapa 3: Imagem final ----------
 # Usa uma imagem que já contém Python e instalamos Nginx nela
