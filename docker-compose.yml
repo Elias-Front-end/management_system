@@ -2,21 +2,20 @@ version: '3.8'
 
 services:
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
-    volumes:
-      - ./backend:/app
-      - media_volume:/app/media
+      - "80:80"
     environment:
       - DJANGO_SETTINGS_MODULE=backend.settings
     env_file:
       - .env.development
     depends_on:
       - db
-    command: python manage.py runserver 0.0.0.0:8000
-
-  # frontend service removed – static assets are served by Nginx from the backend image
+    # No volume mount – code baked into image
+    # Command defined in Dockerfile (Gunicorn + Nginx)
 
   db:
     image: postgres:15-alpine
@@ -28,17 +27,6 @@ services:
       POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
-
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - media_volume:/var/www/media
-    depends_on:
-      - backend
-      - frontend
 
 volumes:
   postgres_data:
